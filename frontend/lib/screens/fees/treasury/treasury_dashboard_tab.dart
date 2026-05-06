@@ -8,7 +8,8 @@ import 'treasury_students_tab.dart';
 import 'treasury_profile_tab.dart';
 
 class TreasuryDashboardTab extends ConsumerStatefulWidget {
-  const TreasuryDashboardTab({super.key});
+  final VoidCallback? onViewStudents;
+  const TreasuryDashboardTab({super.key, this.onViewStudents});
 
   @override
   ConsumerState<TreasuryDashboardTab> createState() => _TreasuryDashboardTabState();
@@ -42,6 +43,118 @@ class _TreasuryDashboardTabState extends ConsumerState<TreasuryDashboardTab> {
   int get _partialPaid => _fees.where((f) => f['status'] == 'partial').length;
   int get _unpaid => _fees.where((f) => f['status'] == 'unpaid' || f['status'] == 'overdue').length;
   double get _pct => _totalDue > 0 ? (_totalPaid / _totalDue).clamp(0.0, 1.0) : 0.0;
+
+  void _showAllPayments(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        expand: false,
+        builder: (_, controller) => Column(children: [
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            width: 40, height: 4,
+            decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)),
+          ),
+          Padding(padding: const EdgeInsets.all(16), child: Text('All Payments', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface))),
+          Expanded(child: ListView.builder(
+            controller: controller,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _fees.length,
+            itemBuilder: (_, i) {
+              final f = _fees[i];
+              final status = f['status'] ?? 'unpaid';
+              final studentName = f['student']?['name'] ?? f['student']?['studentId'] ?? 'Student';
+              final amount = ((f['totalAmount'] ?? 0) as num).toDouble();
+              final paid = ((f['paidAmount'] ?? 0) as num).toDouble();
+              final col = status == 'paid' ? SAMsTheme.success : (status == 'partial' ? SAMsTheme.accent : SAMsTheme.error);
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: Theme.of(context).dividerColor)),
+                child: Row(children: [
+                  Container(width: 40, height: 40, decoration: BoxDecoration(color: col.withOpacity(0.12), shape: BoxShape.circle), child: Icon(status == 'paid' ? Icons.check_rounded : Icons.timelapse_rounded, color: col, size: 20)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(studentName, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+                    Text('RM ${paid.toStringAsFixed(0)} / RM ${amount.toStringAsFixed(0)}', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
+                  ])),
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: col.withOpacity(0.12), borderRadius: BorderRadius.circular(12)), child: Text(status[0].toUpperCase() + status.substring(1), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: col))),
+                ]),
+              );
+            },
+          )),
+        ]),
+      ),
+    );
+  }
+
+  void _showAddFeeDialog(BuildContext context) {
+    final studentIdCtrl = TextEditingController();
+    final amountCtrl = TextEditingController();
+    final descCtrl = TextEditingController(text: 'Tuition Fee');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Fee'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: studentIdCtrl, decoration: const InputDecoration(labelText: 'Student ID (e.g. CB23109)')),
+          const SizedBox(height: 12),
+          TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description')),
+          const SizedBox(height: 12),
+          TextField(controller: amountCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Amount (RM)')),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await ApiService.post('/fees', {
+                  'studentId': studentIdCtrl.text.trim(),
+                  'items': [{'description': descCtrl.text.trim(), 'amount': double.tryParse(amountCtrl.text) ?? 0, 'category': 'tuition'}],
+                  'semester': 2,
+                  'academicYear': '2025/2026',
+                  'dueDate': '2026-06-30',
+                });
+                Navigator.pop(ctx);
+                _load();
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fee added successfully'), backgroundColor: SAMsTheme.success));
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: SAMsTheme.error));
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _sendReminder(BuildContext context) {
+    final unpaidFees = _fees.where((f) => f['status'] == 'unpaid' || f['status'] == 'overdue').toList();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Send Reminder'),
+        content: Text('Send payment reminder to ${unpaidFees.length} student(s) with unpaid fees?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Reminder sent to ${unpaidFees.length} student(s)'), backgroundColor: SAMsTheme.success));
+            },
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+  }
 
   String get _greeting {
     final hour = DateTime.now().hour;
@@ -164,19 +277,19 @@ class _TreasuryDashboardTabState extends ConsumerState<TreasuryDashboardTab> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(children: [
                     Expanded(child: _ActionCard(icon: Icons.people_rounded, label: 'View Students', gradient: const [Color(0xFF667EEA), Color(0xFF764BA2)], onTap: () {
-                      // Navigate to students tab
+                      widget.onViewStudents?.call();
                     })),
                     const SizedBox(width: 10),
-                    Expanded(child: _ActionCard(icon: Icons.receipt_long_rounded, label: 'All Payments', gradient: const [Color(0xFF11998E), Color(0xFF38EF7D)], onTap: () {})),
+                    Expanded(child: _ActionCard(icon: Icons.receipt_long_rounded, label: 'All Payments', gradient: const [Color(0xFF11998E), Color(0xFF38EF7D)], onTap: () => _showAllPayments(context))),
                   ]),
                 ),
                 const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(children: [
-                    Expanded(child: _ActionCard(icon: Icons.add_circle_rounded, label: 'Add Fee', gradient: const [Color(0xFFFC5C7D), Color(0xFF6A82FB)], onTap: () {})),
+                    Expanded(child: _ActionCard(icon: Icons.add_circle_rounded, label: 'Add Fee', gradient: const [Color(0xFFFC5C7D), Color(0xFF6A82FB)], onTap: () => _showAddFeeDialog(context))),
                     const SizedBox(width: 10),
-                    Expanded(child: _ActionCard(icon: Icons.notifications_rounded, label: 'Send Reminder', gradient: const [Color(0xFFF7971E), Color(0xFFFFD200)], onTap: () {})),
+                    Expanded(child: _ActionCard(icon: Icons.notifications_rounded, label: 'Send Reminder', gradient: const [Color(0xFFF7971E), Color(0xFFFFD200)], onTap: () => _sendReminder(context))),
                   ]),
                 ),
 

@@ -13,10 +13,16 @@ class TreasuryShell extends StatefulWidget {
 class _TreasuryShellState extends State<TreasuryShell> {
   int _currentIndex = 0;
 
-  final _screens = const [
-    TreasuryDashboardTab(),
-    TreasuryStudentsTab(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      TreasuryDashboardTab(onViewStudents: () => setState(() => _currentIndex = 1)),
+      const TreasuryStudentsTab(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
