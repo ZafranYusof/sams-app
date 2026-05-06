@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
 import 'treasury_dashboard_tab.dart';
 import 'treasury_students_tab.dart';
-import 'treasury_profile_tab.dart';
 
 class TreasuryShell extends StatefulWidget {
   const TreasuryShell({super.key});
@@ -17,7 +16,6 @@ class _TreasuryShellState extends State<TreasuryShell> {
   final _screens = const [
     TreasuryDashboardTab(),
     TreasuryStudentsTab(),
-    TreasuryProfileTab(),
   ];
 
   @override
@@ -43,7 +41,6 @@ class _TreasuryShellState extends State<TreasuryShell> {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined, size: 22), activeIcon: Icon(Icons.dashboard_rounded, size: 22), label: 'Dashboard'),
             BottomNavigationBarItem(icon: Icon(Icons.people_outline_rounded, size: 22), activeIcon: Icon(Icons.people_rounded, size: 22), label: 'Students'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded, size: 22), activeIcon: Icon(Icons.person_rounded, size: 22), label: 'Profile'),
           ],
         ),
       ),
