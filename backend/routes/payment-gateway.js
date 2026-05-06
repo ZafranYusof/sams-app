@@ -149,7 +149,7 @@ router.get('/fpx/status/:billCode', auth, async (req, res) => {
 
 // ─── STRIPE (CARD) ───
 
-// Create Stripe payment intent
+// Create Stripe Checkout Session
 router.post('/card/create-intent', auth, async (req, res) => {
   try {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -158,14 +158,22 @@ router.post('/card/create-intent', auth, async (req, res) => {
     const fee = await Fee.findById(feeId);
     if (!fee) return res.status(404).json({ error: 'Fee not found' });
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // in cents (MYR)
-      currency: 'myr',
-      metadata: {
-        feeId,
-        studentId: req.user.id,
-      },
-      description: `UMPSA Fee Payment - ${feeId}`,
+    const appUrl = process.env.APP_URL || 'https://sams-app-vasb.onrender.com';
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'myr',
+          product_data: { name: 'UMPSA Tuition Fee Payment' },
+          unit_amount: Math.round(amount * 100),
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `${appUrl}/api/payment/card/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/api/payment/card/cancel`,
+      metadata: { feeId, studentId: req.user.id },
     });
 
     // Save pending payment
@@ -174,14 +182,15 @@ router.post('/card/create-intent', auth, async (req, res) => {
       fee: feeId,
       amount,
       method: 'card',
-      transactionId: paymentIntent.id,
+      transactionId: session.id,
       status: 'pending',
     });
     await payment.save();
 
     res.json({
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
+      paymentUrl: session.url,
+      sessionId: session.id,
+      paymentIntentId: session.id,
       payment,
     });
   } catch (err) {
@@ -189,18 +198,16 @@ router.post('/card/create-intent', auth, async (req, res) => {
   }
 });
 
-// Confirm Stripe payment (after client-side confirmation)
-router.post('/card/confirm', auth, async (req, res) => {
+// Stripe success redirect
+router.get('/card/success', async (req, res) => {
   try {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    const { paymentIntentId } = req.body;
+    const { session_id } = req.query;
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    const payment = await Payment.findOne({ transactionId: paymentIntentId });
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    const payment = await Payment.findOne({ transactionId: session_id });
 
-    if (!payment) return res.status(404).json({ error: 'Payment not found' });
-
-    if (paymentIntent.status === 'succeeded') {
+    if (payment && payment.status === 'pending' && session.payment_status === 'paid') {
       payment.status = 'success';
       payment.receipt = `RCP-${Date.now()}`;
       await payment.save();
@@ -211,12 +218,46 @@ router.post('/card/confirm', auth, async (req, res) => {
         fee.status = fee.paidAmount >= fee.totalAmount ? 'paid' : 'partial';
         await fee.save();
       }
+    }
 
-      res.json({ status: 'success', payment, fee });
+    res.redirect('samsapp://payment/success?session_id=' + session_id);
+  } catch (err) {
+    res.redirect('samsapp://payment/failed');
+  }
+});
+
+// Stripe cancel redirect
+router.get('/card/cancel', (req, res) => {
+  res.redirect('samsapp://payment/failed');
+});
+
+// Confirm Stripe payment (polling from app)
+router.post('/card/confirm', auth, async (req, res) => {
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const { paymentIntentId } = req.body;
+
+    const session = await stripe.checkout.sessions.retrieve(paymentIntentId);
+    const payment = await Payment.findOne({ transactionId: paymentIntentId });
+
+    if (!payment) return res.status(404).json({ error: 'Payment not found' });
+
+    if (session.payment_status === 'paid') {
+      if (payment.status === 'pending') {
+        payment.status = 'success';
+        payment.receipt = `RCP-${Date.now()}`;
+        await payment.save();
+
+        const fee = await Fee.findById(payment.fee);
+        if (fee) {
+          fee.paidAmount += payment.amount;
+          fee.status = fee.paidAmount >= fee.totalAmount ? 'paid' : 'partial';
+          await fee.save();
+        }
+      }
+      res.json({ status: 'success', payment });
     } else {
-      payment.status = 'failed';
-      await payment.save();
-      res.json({ status: 'failed', payment });
+      res.json({ status: 'pending', payment });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });

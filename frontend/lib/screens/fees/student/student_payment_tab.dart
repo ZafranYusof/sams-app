@@ -87,31 +87,29 @@ class _StudentPaymentTabState extends State<StudentPaymentTab> {
           }
         }
       } else {
-        // Stripe Card flow
+        // Stripe Card flow (Checkout Session)
         final result = await ApiService.post('/payment/card/create-intent', {
           'feeId': fee['_id'],
           'amount': _amount,
         });
         
-        final clientSecret = result['clientSecret'];
-        final paymentIntentId = result['paymentIntentId'];
+        final paymentUrl = result['paymentUrl'];
+        final sessionId = result['paymentIntentId'];
         
-        if (clientSecret != null && mounted) {
-          // Open Stripe checkout WebView
-          final stripeUrl = 'https://checkout.stripe.com/pay/$paymentIntentId';
+        if (paymentUrl != null && mounted) {
           final success = await Navigator.push<bool>(context, MaterialPageRoute(
-            builder: (_) => _PaymentWebView(url: stripeUrl, title: 'Card Payment'),
+            builder: (_) => _PaymentWebView(url: paymentUrl, title: 'Card Payment'),
           ));
           
-          // Confirm payment
+          // Confirm payment status
           if (success == true || success == null) {
-            final confirm = await ApiService.post('/payment/card/confirm', {'paymentIntentId': paymentIntentId});
+            final confirm = await ApiService.post('/payment/card/confirm', {'paymentIntentId': sessionId});
             if (confirm['status'] == 'success') {
               setState(() {
-                _receipt = {'status': 'paid', 'amount': _amount, 'txn_id': paymentIntentId, 'bank': 'Card'};
+                _receipt = {'status': 'paid', 'amount': _amount, 'txn_id': sessionId, 'bank': 'Card'};
               });
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Card payment failed.'), backgroundColor: SAMsTheme.error));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Card payment pending or failed.'), backgroundColor: SAMsTheme.warning));
             }
           }
         }
