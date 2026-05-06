@@ -105,8 +105,29 @@ router.get('/payments/history', auth, async (req, res) => {
 // Admin: Create fee for student
 router.post('/', auth, adminOnly, async (req, res) => {
   try {
-    const fee = new Fee(req.body);
-    fee.totalAmount = fee.items.reduce((sum, item) => sum + item.amount, 0);
+    const User = require('../models/User');
+    let { student, studentId, items, semester, academicYear, dueDate } = req.body;
+
+    // Resolve studentId string to ObjectId
+    if (!student && studentId) {
+      const user = await User.findOne({ studentId });
+      if (!user) return res.status(404).json({ error: `Student ${studentId} not found` });
+      student = user._id;
+    }
+    if (!student) return res.status(400).json({ error: 'Student ID required' });
+    if (!items || !items.length) return res.status(400).json({ error: 'Fee items required' });
+
+    const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const fee = new Fee({
+      student,
+      items,
+      semester: semester || 1,
+      academicYear: academicYear || '2025/2026',
+      totalAmount,
+      paidAmount: 0,
+      status: 'unpaid',
+      dueDate: dueDate ? new Date(dueDate) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+    });
     await fee.save();
     res.status(201).json(fee);
   } catch (err) {
