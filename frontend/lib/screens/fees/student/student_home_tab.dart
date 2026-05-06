@@ -14,6 +14,7 @@ class StudentHomeTab extends ConsumerStatefulWidget {
 
 class _StudentHomeTabState extends ConsumerState<StudentHomeTab> {
   List<dynamic> _fees = [];
+  List<dynamic> _payments = [];
   bool _loading = true;
 
   @override
@@ -25,7 +26,9 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> {
   Future<void> _load() async {
     try {
       final fees = await ApiService.get('/fees/my');
-      setState(() { _fees = fees; _loading = false; });
+      List<dynamic> payments = [];
+      try { payments = await ApiService.get('/fees/payments/history'); } catch (_) {}
+      setState(() { _fees = fees; _payments = payments; _loading = false; });
     } catch (e) {
       setState(() => _loading = false);
     }
@@ -36,9 +39,41 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> {
   double get _balance => _totalDue - _totalPaid;
   double get _pct => _totalDue > 0 ? (_totalPaid / _totalDue).clamp(0.0, 1.0) : 0.0;
 
+  // Dynamic semester info from fee data
+  String get _semester {
+    if (_fees.isEmpty) return 'Sem 1, 2025/2026';
+    final f = _fees.first;
+    final sem = f['semester'] ?? 1;
+    final year = f['academicYear'] ?? '2025/2026';
+    return 'Sem $sem, $year';
+  }
+
+  // Due date from earliest unpaid fee
+  DateTime? get _dueDate {
+    for (var f in _fees) {
+      if ((f['status'] ?? '') != 'paid' && f['dueDate'] != null) {
+        return DateTime.tryParse(f['dueDate'].toString());
+      }
+    }
+    return null;
+  }
+
+  int get _daysLeft {
+    final due = _dueDate;
+    if (due == null) return 0;
+    return due.difference(DateTime.now()).inDays.clamp(0, 999);
+  }
+
   int get _week {
     final start = DateTime(2026, 2, 9);
     return (DateTime.now().difference(start).inDays ~/ 7 + 1).clamp(1, 16);
+  }
+
+  // Last payment
+  Map<String, dynamic>? get _lastPayment {
+    if (_payments.isEmpty) return null;
+    final successful = _payments.where((p) => p['status'] == 'success').toList();
+    return successful.isNotEmpty ? successful.first : null;
   }
 
   @override
@@ -48,8 +83,9 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> {
 
     if (_loading) return Scaffold(appBar: AppBar(title: const Text('Tuition Fees')), body: const ShimmerCards());
 
-    final daysLeft = DateTime(2026, 6, 30).difference(DateTime.now()).inDays.clamp(0, 999);
+    final daysLeft = _daysLeft;
     final blocked = _week >= 5 && _balance > 0;
+    final dueDateStr = _dueDate != null ? '${_dueDate!.day} ${_monthName(_dueDate!.month)} ${_dueDate!.year}' : 'N/A';
 
     return Scaffold(
       appBar: AppBar(
@@ -84,11 +120,27 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> {
             // Header
             Text('Hello, $studentId 👋', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 2),
-            Text('Sem 2, 2025/2026 · Week $_week', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
+            Text('$_semester · Week $_week', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
             const SizedBox(height: 16),
 
-            // Warning
-            if (_week < 5 && _balance > 0)
+            // Dynamic warning based on status
+            if (_balance > 0 && daysLeft <= 30)
+              Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: (daysLeft <= 7 ? SAMsTheme.error : SAMsTheme.accent).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: (daysLeft <= 7 ? SAMsTheme.error : SAMsTheme.accent).withOpacity(0.3)),
+                ),
+                child: Text(
+                  daysLeft <= 7
+                    ? '🚨  Payment overdue in $daysLeft days! Pay now to avoid penalties.'
+                    : '⚠️  Payment due in $daysLeft days. Pay before $dueDateStr.',
+                  style: TextStyle(color: daysLeft <= 7 ? SAMsTheme.error : SAMsTheme.accent, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              )
+            else if (_week < 5 && _balance > 0)
               Container(
                 margin: const EdgeInsets.only(bottom: 14),
                 padding: const EdgeInsets.all(12),
@@ -165,13 +217,73 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+
+            // Last payment
+            if (_lastPayment != null)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: Theme.of(context).dividerColor)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Last Payment', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700, fontSize: 14)),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(color: SAMsTheme.success.withOpacity(0.12), shape: BoxShape.circle),
+                      child: const Icon(Icons.check_circle_rounded, color: SAMsTheme.success, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(_fmtRm(((_lastPayment!['amount'] ?? 0) as num).toDouble()), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+                      Text(_lastPayment!['paidAt']?.toString().substring(0, 10) ?? '', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
+                    ])),
+                    Text('via ${_lastPayment!['method']?.toUpperCase() ?? 'FPX'}', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.w600)),
+                  ]),
+                ]),
+              ),
+
+            // Payment deadline
+            if (_dueDate != null && _balance > 0) ...[  
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: daysLeft <= 7
+                      ? [SAMsTheme.error.withOpacity(0.15), SAMsTheme.error.withOpacity(0.05)]
+                      : [SAMsTheme.primary.withOpacity(0.15), SAMsTheme.primary.withOpacity(0.05)],
+                    begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: (daysLeft <= 7 ? SAMsTheme.error : SAMsTheme.primary).withOpacity(0.3)),
+                ),
+                child: Row(children: [
+                  Icon(daysLeft <= 7 ? Icons.warning_rounded : Icons.calendar_today_rounded, color: daysLeft <= 7 ? SAMsTheme.error : SAMsTheme.primary, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Payment Deadline', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).textTheme.bodySmall?.color)),
+                    const SizedBox(height: 2),
+                    Text(dueDateStr, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+                  ])),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(color: (daysLeft <= 7 ? SAMsTheme.error : SAMsTheme.primary).withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                    child: Text('$daysLeft days', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: daysLeft <= 7 ? SAMsTheme.error : SAMsTheme.primary)),
+                  ),
+                ]),
+              ),
+            ],
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  String _fmtRm(double n) => 'RM ${n.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}';
+  String _fmtRm(double n) => 'RM ${n.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}';  
+
+  String _monthName(int m) => ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m];
 }
 
 class _SummaryCard extends StatelessWidget {
