@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../../../config/theme.dart';
 import '../../../services/api_service.dart';
+import '../../../config/api_config.dart';
 
 class StudentHistoryTab extends StatefulWidget {
   const StudentHistoryTab({super.key});
@@ -28,6 +30,28 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
     } catch (e) {
       setState(() => _loading = false);
     }
+  }
+
+  Future<void> _continuePay(Map<String, dynamic> p) async {
+    final txnId = p['transactionId'] ?? '';
+    final method = p['method'] ?? 'fpx';
+    String paymentUrl;
+
+    if (method == 'card' && txnId.startsWith('cs_')) {
+      // Stripe session - might be expired, try anyway
+      paymentUrl = 'https://checkout.stripe.com/c/pay/$txnId';
+    } else {
+      // Toyyibpay bill code
+      final baseUrl = 'https://dev.toyyibpay.com';
+      paymentUrl = '$baseUrl/$txnId';
+    }
+
+    final success = await Navigator.push<bool>(context, MaterialPageRoute(
+      builder: (_) => _ContinuePayWebView(url: paymentUrl, title: 'Continue Payment'),
+    ));
+
+    // Refresh after returning
+    await _load();
   }
 
   List<dynamic> get _filtered => _payments.where((p) {
@@ -94,9 +118,11 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
                             final status = p['status'] ?? 'pending';
                             final isSuccess = status == 'success';
                             final col = isSuccess ? SAMsTheme.success : (status == 'failed' ? SAMsTheme.error : SAMsTheme.accent);
-                            return Container(
+                            return GestureDetector(
+                              onTap: status == 'pending' ? () => _continuePay(p) : null,
+                              child: Container(
                               padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: SAMsTheme.border)),
+                              decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: status == 'pending' ? SAMsTheme.accent.withOpacity(0.4) : SAMsTheme.border)),
                               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 Container(
                                   width: 40, height: 40,
@@ -114,14 +140,69 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
                                   ])),
                                   Text('#${p['transactionId'] ?? ''}', style: const TextStyle(fontSize: 10, color: SAMsTheme.textMuted, fontFamily: 'monospace')),
                                 ])),
-                                Text('RM ${((p['amount'] ?? 0) as num).toStringAsFixed(2)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: col)),
+                                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                                  Text('RM ${((p['amount'] ?? 0) as num).toStringAsFixed(2)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: col)),
+                                  if (status == 'pending') const Padding(padding: EdgeInsets.only(top: 4), child: Text('Tap to pay →', style: TextStyle(fontSize: 10, color: SAMsTheme.accent))),
+                                ]),
                               ]),
-                            );
+                            ));
                           },
                         ),
                       ),
               ),
             ]),
+    );
+  }
+}
+
+// ─── CONTINUE PAYMENT WEBVIEW ───
+class _ContinuePayWebView extends StatefulWidget {
+  final String url;
+  final String title;
+  const _ContinuePayWebView({required this.url, required this.title});
+
+  @override
+  State<_ContinuePayWebView> createState() => _ContinuePayWebViewState();
+}
+
+class _ContinuePayWebViewState extends State<_ContinuePayWebView> {
+  late final WebViewController _controller;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageStarted: (_) => setState(() => _loading = true),
+        onPageFinished: (_) => setState(() => _loading = false),
+        onNavigationRequest: (request) {
+          if (request.url.contains('samsapp://') || request.url.contains('/payment/success') || request.url.contains('/payment/failed')) {
+            final success = request.url.contains('success') || request.url.contains('status_id=1');
+            Navigator.pop(context, success);
+            return NavigationDecision.prevent;
+          }
+          return NavigationDecision.navigate;
+        },
+      ))
+      ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context, false),
+        ),
+      ),
+      body: Stack(children: [
+        WebViewWidget(controller: _controller),
+        if (_loading) const Center(child: CircularProgressIndicator(color: SAMsTheme.primary)),
+      ]),
     );
   }
 }
