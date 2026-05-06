@@ -13,9 +13,13 @@ const router = express.Router();
 router.post('/fpx/create', auth, async (req, res) => {
   try {
     const { feeId, amount, description } = req.body;
+    const User = require('../models/User');
     
     const fee = await Fee.findById(feeId);
     if (!fee) return res.status(404).json({ error: 'Fee not found' });
+
+    // Get full user info from DB
+    const user = await User.findById(req.user.id);
 
     const billData = new URLSearchParams({
       userSecretKey: process.env.TOYYIBPAY_SECRET_KEY,
@@ -28,9 +32,9 @@ router.post('/fpx/create', auth, async (req, res) => {
       billReturnUrl: `${process.env.APP_URL || 'https://sams-app-vasb.onrender.com'}/api/payment/fpx/callback`,
       billCallbackUrl: `${process.env.APP_URL || 'https://sams-app-vasb.onrender.com'}/api/payment/fpx/webhook`,
       billExternalReferenceNo: `FPX-${feeId}-${Date.now()}`,
-      billTo: req.user.name || 'Student',
-      billEmail: req.user.email || '',
-      billPhone: req.user.phone || '0000000000',
+      billTo: user?.name || 'Student',
+      billEmail: user?.email || 'student@umpsa.edu.my',
+      billPhone: user?.phone || '0111111111',
       billPaymentChannel: 0, // FPX only
     });
 
