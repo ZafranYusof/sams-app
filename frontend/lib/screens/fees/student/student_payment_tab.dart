@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../../../config/theme.dart';
 import '../../../services/api_service.dart';
 
@@ -55,14 +56,70 @@ class _StudentPaymentTabState extends State<StudentPaymentTab> {
     setState(() => _paying = true);
     try {
       final fee = _selFeeIndex == 0 ? _fees.first : _fees[_selFeeIndex - 1];
-      final result = await ApiService.post('/fees/pay', {'feeId': fee['_id'], 'amount': _amount, 'bank': _selBank});
-      setState(() {
-        _receipt = {'status': 'paid', 'amount': _amount, 'txn_id': result['payment']?['transactionId'] ?? '', 'bank': _selBank};
-        _paying = false;
-      });
+      
+      if (_selMethod == 'fpx') {
+        // Toyyibpay FPX flow
+        final result = await ApiService.post('/payment/fpx/create', {
+          'feeId': fee['_id'],
+          'amount': _amount,
+          'description': 'UMPSA Tuition Fee Payment',
+        });
+        
+        final paymentUrl = result['paymentUrl'];
+        final billCode = result['billCode'];
+        
+        if (paymentUrl != null && mounted) {
+          // Open WebView for FPX payment
+          final success = await Navigator.push<bool>(context, MaterialPageRoute(
+            builder: (_) => _PaymentWebView(url: paymentUrl, title: 'FPX Payment'),
+          ));
+          
+          // Check payment status after returning
+          if (success == true || success == null) {
+            final status = await ApiService.get('/payment/fpx/status/$billCode');
+            if (status['status'] == 'success') {
+              setState(() {
+                _receipt = {'status': 'paid', 'amount': _amount, 'txn_id': billCode, 'bank': _selBank};
+              });
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment pending or failed. Check history.'), backgroundColor: SAMsTheme.warning));
+            }
+          }
+        }
+      } else {
+        // Stripe Card flow
+        final result = await ApiService.post('/payment/card/create-intent', {
+          'feeId': fee['_id'],
+          'amount': _amount,
+        });
+        
+        final clientSecret = result['clientSecret'];
+        final paymentIntentId = result['paymentIntentId'];
+        
+        if (clientSecret != null && mounted) {
+          // Open Stripe checkout WebView
+          final stripeUrl = 'https://checkout.stripe.com/pay/$paymentIntentId';
+          final success = await Navigator.push<bool>(context, MaterialPageRoute(
+            builder: (_) => _PaymentWebView(url: stripeUrl, title: 'Card Payment'),
+          ));
+          
+          // Confirm payment
+          if (success == true || success == null) {
+            final confirm = await ApiService.post('/payment/card/confirm', {'paymentIntentId': paymentIntentId});
+            if (confirm['status'] == 'success') {
+              setState(() {
+                _receipt = {'status': 'paid', 'amount': _amount, 'txn_id': paymentIntentId, 'bank': 'Card'};
+              });
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Card payment failed.'), backgroundColor: SAMsTheme.error));
+            }
+          }
+        }
+      }
+      setState(() => _paying = false);
     } catch (e) {
       setState(() => _paying = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: SAMsTheme.error));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: SAMsTheme.error));
     }
   }
 
@@ -216,4 +273,57 @@ class _StudentPaymentTabState extends State<StudentPaymentTab> {
       Flexible(child: Text(v, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white), textAlign: TextAlign.right)),
     ]),
   );
+}
+
+// ─── PAYMENT WEBVIEW ───
+class _PaymentWebView extends StatefulWidget {
+  final String url;
+  final String title;
+  const _PaymentWebView({required this.url, required this.title});
+
+  @override
+  State<_PaymentWebView> createState() => _PaymentWebViewState();
+}
+
+class _PaymentWebViewState extends State<_PaymentWebView> {
+  late final WebViewController _controller;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageStarted: (_) => setState(() => _loading = true),
+        onPageFinished: (_) => setState(() => _loading = false),
+        onNavigationRequest: (request) {
+          // Intercept callback/deep link
+          if (request.url.contains('samsapp://') || request.url.contains('/payment/success') || request.url.contains('/payment/failed')) {
+            final success = request.url.contains('success') || request.url.contains('status_id=1');
+            Navigator.pop(context, success);
+            return NavigationDecision.prevent;
+          }
+          return NavigationDecision.navigate;
+        },
+      ))
+      ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context, false),
+        ),
+      ),
+      body: Stack(children: [
+        WebViewWidget(controller: _controller),
+        if (_loading) const Center(child: CircularProgressIndicator(color: SAMsTheme.primary)),
+      ]),
+    );
+  }
 }
