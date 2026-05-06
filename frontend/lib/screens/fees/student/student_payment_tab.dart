@@ -94,7 +94,8 @@ class _StudentPaymentTabState extends State<StudentPaymentTab> {
             ...List.generate(_fees.length, (i) {
               final f = _fees[i];
               final bal = ((f['totalAmount'] ?? 0) - (f['paidAmount'] ?? 0)).toDouble();
-              return _feeOption('Semester ${f['semester']}', bal, i + 1);
+              final name = (f['items'] != null && (f['items'] as List).isNotEmpty) ? f['items'][0]['description'] ?? 'Semester ${f['semester']}' : 'Semester ${f['semester']}';
+              return _feeOption(name, bal, i + 1);
             }),
           ])),
           const SizedBox(height: 12),

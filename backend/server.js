@@ -11,6 +11,7 @@ const attendanceRoutes = require('./routes/attendance');
 const feesRoutes = require('./routes/fees');
 const paymentsRoutes = require('./routes/payments');
 const notificationsRoutes = require('./routes/notifications');
+const paymentGatewayRoutes = require('./routes/payment-gateway');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/fees', feesRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/payment', paymentGatewayRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
