@@ -70,6 +70,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> refreshProfile() async {
+    try {
+      final user = await ApiService.get('/auth/profile');
+      state = AuthState(isAuthenticated: true, user: Map<String, dynamic>.from(user));
+    } catch (_) {}
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');

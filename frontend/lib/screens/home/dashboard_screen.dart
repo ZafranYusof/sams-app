@@ -8,6 +8,7 @@ import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../services/api_service.dart';
 import '../registration/registration_screen.dart';
 import '../attendance/attendance_screen.dart';
 import '../curriculum/curriculum_screen.dart';
@@ -24,11 +25,18 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   String? _profileImage;
+  List<dynamic> _announcements = [];
+  Map<String, dynamic>? _feeSummary;
+  bool _loadingData = false;
 
   @override
   void initState() {
     super.initState();
-    _loadProfileImage();
+    _loadAll();
+  }
+
+  Future<void> _loadAll() async {
+    await Future.wait([_loadProfileImage(), _loadAnnouncements(), _loadFeeSummary()]);
   }
 
   Future<void> _loadProfileImage() async {
@@ -36,8 +44,39 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     setState(() => _profileImage = prefs.getString('profile_image'));
   }
 
+  Future<void> _loadAnnouncements() async {
+    try {
+      final data = await ApiService.get('/announcements');
+      if (data is List) setState(() => _announcements = data);
+    } catch (_) {
+      // No announcements endpoint yet, use empty
+    }
+  }
+
+  Future<void> _loadFeeSummary() async {
+    try {
+      final user = ref.read(authProvider).user;
+      final sid = user?['studentId'] ?? user?['student_id'] ?? '';
+      if (sid.isNotEmpty) {
+        final data = await ApiService.get('/fees/$sid/summary');
+        setState(() => _feeSummary = data['summary']);
+      }
+    } catch (_) {}
+  }
+
   Future<void> _refresh() async {
-    await _loadProfileImage();
+    setState(() => _loadingData = true);
+    await _loadAll();
+    // Force refresh auth state
+    ref.read(authProvider.notifier).refreshProfile();
+    setState(() => _loadingData = false);
+  }
+
+  String get _greeting {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
   }
 
   @override
@@ -109,9 +148,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
 
+              // ─── GREETING ───
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+                child: Text('$_greeting, ${name.split(' ').first} 👋', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w700)),
+              ),
+
               // ─── STUDENT INFO CARD (ADAB style) ───
               Container(
-                margin: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0F7FA),
@@ -136,7 +181,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(name.toUpperCase(), style: const TextStyle(color: Color(0xFF1A1A2E), fontSize: 15, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 6),
-                      Text('SARJANA MUDA SAINS KOMPUTER\n(KEJURUTERAAN PERISIAN)\nDENGAN KEPUJIAN', style: TextStyle(color: Colors.grey[700], fontSize: 11, height: 1.4)),
+                      Text((user?['program'] ?? 'Software Engineering').toUpperCase(), style: TextStyle(color: Colors.grey[700], fontSize: 11, height: 1.4)),
+                      if (user?['faculty'] != null) Text(user!['faculty'].toUpperCase(), style: TextStyle(color: Colors.grey[600], fontSize: 10, fontWeight: FontWeight.w600)),
                     ])),
                   ],
                 ),
@@ -230,29 +276,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
 
-              // ─── BANNER ───
-              Container(
-                margin: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF1A3A5F), Color(0xFF0D2847)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      const Text('FOOD@CAMPUS', style: TextStyle(color: Color(0xFF48CAE4), fontSize: 18, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 4),
-                      const Text('UMPSA E-Coupon', style: TextStyle(color: Color(0xFFFFB74D), fontSize: 14, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 8),
-                      Text('Redeem your meal vouchers at any campus cafeteria', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
-                    ])),
-                    Container(
-                      width: 60, height: 60,
-                      decoration: BoxDecoration(color: const Color(0xFFFFB74D).withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
-                      child: const Icon(Icons.restaurant_menu_rounded, color: Color(0xFFFFB74D), size: 30),
-                    ),
-                  ],
+              // ─── FEE SUMMARY BANNER ───
+              GestureDetector(
+                onTap: () => Navigator.push(context, SlidePageRoute(page: const FeesScreen())),
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFF1A3A5F), Color(0xFF0D2847)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        const Text('TUITION FEES', style: TextStyle(color: Color(0xFF48CAE4), fontSize: 14, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 6),
+                        Text('RM ${((_feeSummary?['balance'] ?? 0) as num).toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 4),
+                        Text(_feeSummary != null && (_feeSummary!['balance'] as num) <= 0 ? '✅ Fully Paid' : 'Outstanding Balance', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12)),
+                      ])),
+                      Container(
+                        width: 60, height: 60,
+                        decoration: BoxDecoration(color: SAMsTheme.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
+                        child: const Icon(Icons.payments_rounded, color: Color(0xFF48CAE4), size: 30),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -274,9 +323,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     Text('View all', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12)),
                   ]),
                   const SizedBox(height: 12),
-                  _announcementItem('Registration for Sem 1 2026/2027 opens 15 June', '2 days ago'),
-                  _announcementItem('Library extended hours during exam week', '5 days ago'),
-                  _announcementItem('Convocation ceremony rescheduled to 20 July', '1 week ago'),
+                  if (_announcements.isEmpty) ...
+                    [_announcementItem('No new announcements', '')]
+                  else
+                    ..._announcements.take(3).map((a) => _announcementItem(a['title'] ?? '', a['time'] ?? '')),
                 ]),
               ),
 
