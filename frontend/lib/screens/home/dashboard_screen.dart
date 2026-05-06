@@ -237,21 +237,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(colors: [Color(0xFF1A3A5F), Color(0xFF0D2847)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: SAMsTheme.primary.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       const Text('FOOD@CAMPUS', style: TextStyle(color: Color(0xFF48CAE4), fontSize: 18, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 4),
-                      const Text('UMPSA E-Coupon', style: TextStyle(color: SAMsTheme.accent, fontSize: 14, fontWeight: FontWeight.w700)),
+                      const Text('UMPSA E-Coupon', style: TextStyle(color: Color(0xFFFFB74D), fontSize: 14, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
-                      Text('Redeem your meal vouchers at any campus cafeteria', style: TextStyle(color: SAMsTheme.textSecondary, fontSize: 11)),
+                      Text('Redeem your meal vouchers at any campus cafeteria', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
                     ])),
                     Container(
                       width: 60, height: 60,
-                      decoration: BoxDecoration(color: SAMsTheme.accent.withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
-                      child: const Icon(Icons.restaurant_menu_rounded, color: SAMsTheme.accent, size: 30),
+                      decoration: BoxDecoration(color: const Color(0xFFFFB74D).withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
+                      child: const Icon(Icons.restaurant_menu_rounded, color: Color(0xFFFFB74D), size: 30),
                     ),
                   ],
                 ),
@@ -262,17 +261,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: SAMsTheme.surface,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: SAMsTheme.border),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
-                    const Icon(Icons.campaign_rounded, color: SAMsTheme.accent, size: 20),
+                    Icon(Icons.campaign_rounded, color: Theme.of(context).colorScheme.secondary, size: 20),
                     const SizedBox(width: 8),
                     Text(t('announcements', lang), style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w700)),
                     const Spacer(),
-                    Text('View all', style: TextStyle(color: SAMsTheme.primary, fontSize: 12)),
+                    Text('View all', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12)),
                   ]),
                   const SizedBox(height: 12),
                   _announcementItem('Registration for Sem 1 2026/2027 opens 15 June', '2 days ago'),
@@ -291,8 +290,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   children: ['Residency', 'Sport Complex', 'Library', 'Health Centre', 'Lab', 'Dewan', 'Mosque'].map((f) => Container(
                     margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: SAMsTheme.border)),
-                    child: Text(f, style: const TextStyle(color: SAMsTheme.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: Theme.of(context).dividerColor)),
+                    child: Text(f, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13, fontWeight: FontWeight.w500)),
                   )).toList(),
                 ),
               ),
@@ -305,17 +304,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  static Widget _announcementItem(String text, String time) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Container(width: 6, height: 6, margin: const EdgeInsets.only(top: 6), decoration: const BoxDecoration(color: SAMsTheme.primary, shape: BoxShape.circle)),
-      const SizedBox(width: 10),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(text, style: const TextStyle(color: SAMsTheme.textSecondary, fontSize: 12, height: 1.3)),
-        const SizedBox(height: 2),
-        Text(time, style: const TextStyle(color: SAMsTheme.textMuted, fontSize: 10)),
-      ])),
-    ]),
+  static Widget _announcementItem(String text, String time) => Builder(
+    builder: (context) {
+      final colors = Theme.of(context).colorScheme;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(width: 6, height: 6, margin: const EdgeInsets.only(top: 6), decoration: BoxDecoration(color: colors.primary, shape: BoxShape.circle)),
+          const SizedBox(width: 10),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(text, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12, height: 1.3)),
+            const SizedBox(height: 2),
+            Text(time, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 10)),
+          ])),
+        ]),
+      );
+    },
   );
 
   void _showProfileMenu(BuildContext context, WidgetRef ref) {
