@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Fee = require('../models/Fee');
 const Payment = require('../models/Payment');
 const { auth, adminOnly } = require('../middleware/auth');
@@ -11,6 +12,16 @@ router.get('/my', auth, async (req, res) => {
   try {
     const fees = await Fee.find({ student: req.user.id }).sort({ createdAt: -1 });
     res.json(fees);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get payment history (MUST be before /:studentId to avoid route conflict)
+router.get('/payments/history', auth, async (req, res) => {
+  try {
+    const payments = await Payment.find({ student: req.user.id }).populate('fee').sort({ paidAt: -1 });
+    res.json(payments);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -59,6 +70,12 @@ router.get('/:studentId/summary', auth, async (req, res) => {
 router.post('/pay', auth, async (req, res) => {
   try {
     const { feeId, amount, bank } = req.body;
+    if (!feeId || !mongoose.Types.ObjectId.isValid(feeId)) {
+      return res.status(400).json({ error: 'Invalid fee ID' });
+    }
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
     
     const fee = await Fee.findById(feeId);
     if (!fee) return res.status(404).json({ error: 'Fee not found' });
@@ -87,16 +104,6 @@ router.post('/pay', auth, async (req, res) => {
     await fee.save();
 
     res.status(201).json({ payment, fee });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Get payment history
-router.get('/payments/history', auth, async (req, res) => {
-  try {
-    const payments = await Payment.find({ student: req.user.id }).populate('fee').sort({ paidAt: -1 });
-    res.json(payments);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

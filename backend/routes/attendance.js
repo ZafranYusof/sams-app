@@ -1,5 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const Attendance = require('../models/Attendance');
 const Course = require('../models/Course');
 const Registration = require('../models/Registration');
@@ -49,6 +50,9 @@ router.post('/check-in', auth, async (req, res) => {
 // Get my attendance for a course
 router.get('/my/:courseId', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.courseId)) {
+      return res.status(400).json({ error: 'Invalid course ID' });
+    }
     const records = await Attendance.find({ student: req.user.id, course: req.params.courseId }).sort({ date: -1 });
     const total = records.length;
     const present = records.filter(r => r.status === 'present' || r.status === 'late').length;
@@ -90,6 +94,9 @@ router.post('/mark', auth, async (req, res) => {
 // Admin: Get attendance for a course on a date
 router.get('/course/:courseId', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.courseId)) {
+      return res.status(400).json({ error: 'Invalid course ID' });
+    }
     const { date } = req.query;
     const filter = { course: req.params.courseId };
     if (date) filter.date = new Date(date);

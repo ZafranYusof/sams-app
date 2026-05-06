@@ -119,7 +119,7 @@ class _StudentAlertsTabState extends ConsumerState<StudentAlertsTab> {
                                   const SizedBox(height: 4),
                                   Text(a['message'] ?? '', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color, height: 1.4)),
                                   const SizedBox(height: 6),
-                                  Text(a['created_at']?.toString().substring(0, 10) ?? '', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
+                                  Text((a['createdAt'] ?? a['created_at'])?.toString().substring(0, 10) ?? '', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
                                 ])),
                                 if (!isRead)
                                   Container(width: 8, height: 8, margin: const EdgeInsets.only(top: 4), decoration: const BoxDecoration(color: SAMsTheme.primary, shape: BoxShape.circle)),

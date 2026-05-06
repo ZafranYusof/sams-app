@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Course = require('../models/Course');
 const Registration = require('../models/Registration');
 const { auth, adminOnly } = require('../middleware/auth');
@@ -23,6 +24,9 @@ router.get('/courses', auth, async (req, res) => {
 router.post('/register', auth, async (req, res) => {
   try {
     const { courseId, semester, academicYear } = req.body;
+    if (!courseId || !mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ error: 'Invalid course ID' });
+    }
     
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ error: 'Course not found' });
@@ -56,6 +60,9 @@ router.get('/my', auth, async (req, res) => {
 // Drop a course
 router.put('/drop/:id', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid registration ID' });
+    }
     const reg = await Registration.findOne({ _id: req.params.id, student: req.user.id });
     if (!reg) return res.status(404).json({ error: 'Registration not found' });
     if (reg.status === 'dropped') return res.status(400).json({ error: 'Already dropped' });

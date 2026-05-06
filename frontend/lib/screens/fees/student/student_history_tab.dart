@@ -134,7 +134,7 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
                                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                   Text(p['transactionId'] ?? 'Payment', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
                                   const SizedBox(height: 2),
-                                  Text(p['paidAt']?.toString().substring(0, 10) ?? '', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
+                                  Text(p['paidAt'] != null && p['paidAt'].toString().length >= 10 ? p['paidAt'].toString().substring(0, 10) : (p['paidAt']?.toString() ?? ''), style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
                                   Text.rich(TextSpan(text: '${p['bank'] ?? 'FPX'}  ·  ', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color), children: [
                                     TextSpan(text: status[0].toUpperCase() + status.substring(1), style: TextStyle(color: col, fontWeight: FontWeight.w700)),
                                   ])),

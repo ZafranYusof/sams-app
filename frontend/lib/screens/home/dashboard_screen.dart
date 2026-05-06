@@ -292,9 +292,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         const Text('TUITION FEES', style: TextStyle(color: Color(0xFF48CAE4), fontSize: 14, fontWeight: FontWeight.w700)),
                         const SizedBox(height: 6),
-                        Text('RM ${((_feeSummary?['balance'] ?? 0) as num).toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
+                        Text('RM ${((_feeSummary?['balance'] ?? 0) is num ? (_feeSummary?['balance'] ?? 0) as num : 0).toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
                         const SizedBox(height: 4),
-                        Text(_feeSummary != null && (_feeSummary!['balance'] as num) <= 0 ? '✅ Fully Paid' : 'Outstanding Balance', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12)),
+                        Text(_feeSummary != null && ((_feeSummary!['balance'] ?? 0) as num) <= 0 ? '✅ Fully Paid' : 'Outstanding Balance', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12)),
                       ])),
                       Container(
                         width: 60, height: 60,

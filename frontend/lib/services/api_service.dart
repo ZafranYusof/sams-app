@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,29 +19,50 @@ class ApiService {
   }
 
   static Future<dynamic> get(String endpoint) async {
-    final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-      headers: await _headers(),
-    );
-    return _handleResponse(response);
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: await _headers(),
+      ).timeout(const Duration(seconds: 30));
+      return _handleResponse(response);
+    } on Exception catch (e) {
+      if (e.toString().contains('TimeoutException')) {
+        throw Exception('Request timed out. Please check your connection.');
+      }
+      rethrow;
+    }
   }
 
   static Future<dynamic> post(String endpoint, Map<String, dynamic> body) async {
-    final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-      headers: await _headers(),
-      body: jsonEncode(body),
-    );
-    return _handleResponse(response);
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: await _headers(),
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 30));
+      return _handleResponse(response);
+    } on Exception catch (e) {
+      if (e.toString().contains('TimeoutException')) {
+        throw Exception('Request timed out. Please check your connection.');
+      }
+      rethrow;
+    }
   }
 
   static Future<dynamic> put(String endpoint, Map<String, dynamic> body) async {
-    final response = await http.put(
-      Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-      headers: await _headers(),
-      body: jsonEncode(body),
-    );
-    return _handleResponse(response);
+    try {
+      final response = await http.put(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: await _headers(),
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 30));
+      return _handleResponse(response);
+    } on Exception catch (e) {
+      if (e.toString().contains('TimeoutException')) {
+        throw Exception('Request timed out. Please check your connection.');
+      }
+      rethrow;
+    }
   }
 
   static dynamic _handleResponse(http.Response response) {

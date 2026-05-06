@@ -55,13 +55,33 @@ class _StudentPaymentTabState extends State<StudentPaymentTab> {
     if (_amount <= 0) return;
     setState(() => _paying = true);
     try {
-      final fee = _selFeeIndex == 0 ? _fees.first : _fees[_selFeeIndex - 1];
+      // Determine which fees to pay
+      List<Map<String, dynamic>> feesToPay = [];
+      if (_selFeeIndex == 0) {
+        // Pay all unpaid fees
+        for (var f in _fees) {
+          final bal = ((f['totalAmount'] ?? 0) - (f['paidAmount'] ?? 0)).toDouble();
+          if (bal > 0) feesToPay.add({'id': f['_id'], 'amount': bal});
+        }
+      } else {
+        final fee = _fees[_selFeeIndex - 1];
+        final bal = ((fee['totalAmount'] ?? 0) - (fee['paidAmount'] ?? 0)).toDouble();
+        if (bal > 0) feesToPay.add({'id': fee['_id'], 'amount': bal});
+      }
+
+      if (feesToPay.isEmpty) {
+        setState(() => _paying = false);
+        return;
+      }
+
+      // For simplicity, pay the first fee (gateway creates one bill per fee)
+      final targetFee = feesToPay.first;
       
       if (_selMethod == 'fpx') {
         // Toyyibpay FPX flow
         final result = await ApiService.post('/payment/fpx/create', {
-          'feeId': fee['_id'],
-          'amount': _amount,
+          'feeId': targetFee['id'],
+          'amount': targetFee['amount'],
           'description': 'UMPSA Tuition Fee Payment',
         });
         
@@ -79,18 +99,18 @@ class _StudentPaymentTabState extends State<StudentPaymentTab> {
             final status = await ApiService.get('/payment/fpx/status/$billCode');
             if (status['status'] == 'success') {
               setState(() {
-                _receipt = {'status': 'paid', 'amount': _amount, 'txn_id': billCode, 'bank': _selBank};
+                _receipt = {'status': 'paid', 'amount': targetFee['amount'], 'txn_id': billCode, 'bank': _selBank};
               });
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment pending or failed. Check history.'), backgroundColor: SAMsTheme.warning));
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment pending or failed. Check history.'), backgroundColor: SAMsTheme.warning));
             }
           }
         }
       } else {
         // Stripe Card flow (Checkout Session)
         final result = await ApiService.post('/payment/card/create-intent', {
-          'feeId': fee['_id'],
-          'amount': _amount,
+          'feeId': targetFee['id'],
+          'amount': targetFee['amount'],
         });
         
         final paymentUrl = result['paymentUrl'];
@@ -106,10 +126,10 @@ class _StudentPaymentTabState extends State<StudentPaymentTab> {
             final confirm = await ApiService.post('/payment/card/confirm', {'paymentIntentId': sessionId});
             if (confirm['status'] == 'success') {
               setState(() {
-                _receipt = {'status': 'paid', 'amount': _amount, 'txn_id': sessionId, 'bank': 'Card'};
+                _receipt = {'status': 'paid', 'amount': targetFee['amount'], 'txn_id': sessionId, 'bank': 'Card'};
               });
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Card payment pending or failed.'), backgroundColor: SAMsTheme.warning));
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Card payment pending or failed.'), backgroundColor: SAMsTheme.warning));
             }
           }
         }

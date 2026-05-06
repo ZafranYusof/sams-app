@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../home/main_shell.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -43,6 +44,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+
+    // Navigate to home when authenticated after registration
+    ref.listen<AuthState>(authProvider, (prev, next) {
+      if (next.isAuthenticated && !(prev?.isAuthenticated ?? false)) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainShell()),
+          (route) => false,
+        );
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(title: const Text('Create Account')),

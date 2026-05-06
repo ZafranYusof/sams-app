@@ -236,7 +236,7 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> {
                     const SizedBox(width: 12),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(_fmtRm(((_lastPayment!['amount'] ?? 0) as num).toDouble()), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
-                      Text(_lastPayment!['paidAt']?.toString().substring(0, 10) ?? '', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
+                      Text(_lastPayment!['paidAt'] != null ? _lastPayment!['paidAt'].toString().length >= 10 ? _lastPayment!['paidAt'].toString().substring(0, 10) : _lastPayment!['paidAt'].toString() : '', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
                     ])),
                     Text('via ${_lastPayment!['method']?.toUpperCase() ?? 'FPX'}', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.w600)),
                   ]),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
 
 class GlassCard extends StatelessWidget {
   final Widget child;
@@ -12,9 +11,9 @@ class GlassCard extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: SAMsTheme.surface,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: SAMsTheme.border),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: child,
     );

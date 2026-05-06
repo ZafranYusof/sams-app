@@ -29,6 +29,9 @@ router.get('/:studentId', auth, async (req, res) => {
 // PUT /api/notifications/:id/read
 router.put('/:id/read', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid notification ID' });
+    }
     await Notification.findByIdAndUpdate(req.params.id, { read: true });
     res.json({ success: true });
   } catch (err) {

@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Activity = require('../models/Activity');
 const { auth, adminOnly } = require('../middleware/auth');
 
@@ -18,9 +19,22 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// Get my activities (MUST be before /:id to avoid route conflict)
+router.get('/my/joined', auth, async (req, res) => {
+  try {
+    const activities = await Activity.find({ participants: req.user.id }).sort({ date: -1 });
+    res.json(activities);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get single activity
 router.get('/:id', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid activity ID' });
+    }
     const activity = await Activity.findById(req.params.id).populate('participants', 'name studentId');
     if (!activity) return res.status(404).json({ error: 'Activity not found' });
     res.json(activity);
@@ -32,6 +46,9 @@ router.get('/:id', auth, async (req, res) => {
 // Join activity
 router.post('/:id/join', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid activity ID' });
+    }
     const activity = await Activity.findById(req.params.id);
     if (!activity) return res.status(404).json({ error: 'Activity not found' });
     if (activity.participants.includes(req.user.id)) return res.status(400).json({ error: 'Already joined' });
@@ -48,22 +65,15 @@ router.post('/:id/join', auth, async (req, res) => {
 // Leave activity
 router.post('/:id/leave', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid activity ID' });
+    }
     const activity = await Activity.findById(req.params.id);
     if (!activity) return res.status(404).json({ error: 'Activity not found' });
 
     activity.participants = activity.participants.filter(p => p.toString() !== req.user.id);
     await activity.save();
     res.json(activity);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Get my activities
-router.get('/my/joined', auth, async (req, res) => {
-  try {
-    const activities = await Activity.find({ participants: req.user.id }).sort({ date: -1 });
-    res.json(activities);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

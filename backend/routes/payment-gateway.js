@@ -1,6 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const https = require('https');
+const mongoose = require('mongoose');
 const Fee = require('../models/Fee');
 const Payment = require('../models/Payment');
 const { auth } = require('../middleware/auth');
@@ -13,6 +14,12 @@ const router = express.Router();
 router.post('/fpx/create', auth, async (req, res) => {
   try {
     const { feeId, amount, description } = req.body;
+    if (!feeId || !mongoose.Types.ObjectId.isValid(feeId)) {
+      return res.status(400).json({ error: 'Invalid fee ID' });
+    }
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
     const User = require('../models/User');
     
     const fee = await Fee.findById(feeId);
@@ -158,6 +165,12 @@ router.post('/card/create-intent', auth, async (req, res) => {
   try {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const { feeId, amount } = req.body;
+    if (!feeId || !mongoose.Types.ObjectId.isValid(feeId)) {
+      return res.status(400).json({ error: 'Invalid fee ID' });
+    }
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
 
     const fee = await Fee.findById(feeId);
     if (!fee) return res.status(404).json({ error: 'Fee not found' });

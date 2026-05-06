@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme.dart';
 import '../../../services/api_service.dart';
 import '../../../providers/auth_provider.dart';
-import 'treasury_students_tab.dart';
-import 'treasury_profile_tab.dart';
 
 class TreasuryDashboardTab extends ConsumerStatefulWidget {
   final VoidCallback? onViewStudents;
