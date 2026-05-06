@@ -61,7 +61,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> with Single
           controller: _tabController,
           indicatorColor: SAMsTheme.accent,
           labelColor: SAMsTheme.accent,
-          unselectedLabelColor: SAMsTheme.textMuted,
+          unselectedLabelColor: Theme.of(context).textTheme.bodySmall?.color,
           tabs: const [Tab(text: 'Explore'), Tab(text: 'Joined')],
         ),
       ),
@@ -76,7 +76,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> with Single
 
   Widget _buildExplore() {
     if (_activities.isEmpty) {
-      return const Center(child: Text('No activities available', style: TextStyle(color: SAMsTheme.textMuted)));
+      return Center(child: Text('No activities available', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -103,17 +103,17 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> with Single
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(activity['name'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
+                  Text(activity['name'] ?? '', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600, fontSize: 16)),
                   if (activity['description'] != null) ...[
                     const SizedBox(height: 6),
-                    Text(activity['description'], style: const TextStyle(color: SAMsTheme.textMuted, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Text(activity['description'], style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
                   ],
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.people_outline, size: 14, color: SAMsTheme.textMuted),
+                      Icon(Icons.people_outline, size: 14, color: Theme.of(context).textTheme.bodySmall?.color),
                       const SizedBox(width: 4),
-                      Text('${(activity['participants'] as List?)?.length ?? 0}/${activity['capacity']}', style: const TextStyle(color: SAMsTheme.textMuted, fontSize: 12)),
+                      Text('${(activity['participants'] as List?)?.length ?? 0}/${activity['capacity']}', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
                       const Spacer(),
                       ElevatedButton(
                         onPressed: () => _joinActivity(activity['_id']),
@@ -133,7 +133,7 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> with Single
 
   Widget _buildJoined() {
     if (_myActivities.isEmpty) {
-      return const Center(child: Text('No joined activities', style: TextStyle(color: SAMsTheme.textMuted)));
+      return Center(child: Text('No joined activities', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -150,8 +150,8 @@ class _CurriculumScreenState extends ConsumerState<CurriculumScreen> with Single
                 decoration: BoxDecoration(color: SAMsTheme.accent.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.emoji_events, color: SAMsTheme.accent, size: 20),
               ),
-              title: Text(activity['name'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-              subtitle: Text(activity['category'] ?? '', style: const TextStyle(color: SAMsTheme.textMuted, fontSize: 12)),
+              title: Text(activity['name'] ?? '', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500)),
+              subtitle: Text(activity['category'] ?? '', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
               trailing: Text('${activity['points'] ?? 0} pts', style: const TextStyle(color: SAMsTheme.accent, fontWeight: FontWeight.w600)),
             ),
           ),

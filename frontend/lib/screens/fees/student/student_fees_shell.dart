@@ -27,16 +27,16 @@ class _StudentFeesShellState extends State<StudentFeesShell> {
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: SAMsTheme.surface,
-          border: Border(top: BorderSide(color: SAMsTheme.border)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (i) => setState(() => _currentIndex = i),
-          backgroundColor: SAMsTheme.surface,
+          backgroundColor: Theme.of(context).cardColor,
           selectedItemColor: SAMsTheme.primary,
-          unselectedItemColor: SAMsTheme.textMuted,
+          unselectedItemColor: Theme.of(context).textTheme.bodySmall?.color,
           type: BottomNavigationBarType.fixed,
           selectedFontSize: 11,
           unselectedFontSize: 11,

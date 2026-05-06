@@ -82,9 +82,9 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> {
           padding: const EdgeInsets.all(16),
           children: [
             // Header
-            Text('Hello, $studentId 👋', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+            Text('Hello, $studentId 👋', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 2),
-            Text('Sem 2, 2025/2026 · Week $_week', style: const TextStyle(fontSize: 12, color: SAMsTheme.textMuted)),
+            Text('Sem 2, 2025/2026 · Week $_week', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
             const SizedBox(height: 16),
 
             // Warning
@@ -117,22 +117,22 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> {
             // Progress
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: SAMsTheme.border)),
+              decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: Theme.of(context).dividerColor)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Payment Progress', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                  Text('Payment Progress', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700, fontSize: 14)),
                   const SizedBox(height: 10),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text('${_fmtRm(_totalPaid)} paid', style: const TextStyle(fontSize: 12, color: SAMsTheme.textSecondary)),
+                    Text('${_fmtRm(_totalPaid)} paid', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color)),
                     Text('${(_pct * 100).toStringAsFixed(1)}%', style: const TextStyle(fontSize: 12, color: SAMsTheme.primary, fontWeight: FontWeight.w700)),
                   ]),
                   const SizedBox(height: 8),
-                  ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: _pct, minHeight: 8, backgroundColor: SAMsTheme.background, valueColor: AlwaysStoppedAnimation<Color>(_pct >= 1 ? SAMsTheme.success : SAMsTheme.primary))),
+                  ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: _pct, minHeight: 8, backgroundColor: Theme.of(context).dividerColor, valueColor: AlwaysStoppedAnimation<Color>(_pct >= 1 ? SAMsTheme.success : SAMsTheme.primary))),
                   const SizedBox(height: 8),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    const Text('RM 0', style: TextStyle(fontSize: 11, color: SAMsTheme.textMuted)),
-                    Text(_fmtRm(_totalDue), style: const TextStyle(fontSize: 11, color: SAMsTheme.textMuted)),
+                    Text('RM 0', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
+                    Text(_fmtRm(_totalDue), style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
                   ]),
                 ],
               ),
@@ -142,22 +142,22 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> {
             // Fee breakdown
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: SAMsTheme.border)),
+              decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: Theme.of(context).dividerColor)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Fee Breakdown', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                  Text('Fee Breakdown', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700, fontSize: 14)),
                   const SizedBox(height: 12),
                   ..._fees.expand((fee) {
                     final items = (fee['items'] as List?) ?? [];
                     return items.map((item) => Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: SAMsTheme.border))),
+                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor))),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(item['description'] ?? '', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
-                          Text('RM ${((item['amount'] ?? 0) as num).toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                          Text(item['description'] ?? '', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+                          Text('RM ${((item['amount'] ?? 0) as num).toStringAsFixed(2)}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
                         ],
                       ),
                     ));
@@ -186,14 +186,14 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: [color.withOpacity(0.2), color.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: SAMsTheme.border),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(emoji, style: const TextStyle(fontSize: 22)),
         const SizedBox(height: 6),
-        Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: SAMsTheme.textMuted, letterSpacing: 0.5)),
+        Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodySmall?.color, letterSpacing: 0.5)),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
+        Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
       ]),
     );
   }

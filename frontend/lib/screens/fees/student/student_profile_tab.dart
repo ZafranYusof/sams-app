@@ -22,9 +22,9 @@ class StudentProfileTab extends ConsumerWidget {
             child: Center(child: Text((user?['name'] ?? 'S')[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700))),
           )),
           const SizedBox(height: 16),
-          Center(child: Text(user?['name'] ?? 'Student', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700))),
-          Center(child: Text(user?['studentId'] ?? '', style: const TextStyle(color: SAMsTheme.textMuted, fontSize: 13))),
-          Center(child: Text(user?['email'] ?? '', style: const TextStyle(color: SAMsTheme.textSecondary, fontSize: 12))),
+          Center(child: Text(user?['name'] ?? 'Student', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20, fontWeight: FontWeight.w700))),
+          Center(child: Text(user?['studentId'] ?? '', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13))),
+          Center(child: Text(user?['email'] ?? '', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12))),
           const SizedBox(height: 32),
           _profileItem(Icons.school_outlined, 'Faculty', user?['faculty'] ?? 'FKOM'),
           _profileItem(Icons.menu_book_outlined, 'Program', user?['program'] ?? 'Software Engineering'),
@@ -41,17 +41,19 @@ class StudentProfileTab extends ConsumerWidget {
     );
   }
 
-  Widget _profileItem(IconData icon, String label, String value) => Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: SAMsTheme.border)),
-    child: Row(children: [
-      Icon(icon, color: SAMsTheme.primary, size: 20),
-      const SizedBox(width: 12),
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: SAMsTheme.textMuted)),
-        Text(value, style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w600)),
+  Widget _profileItem(IconData icon, String label, String value) => Builder(
+    builder: (context) => Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: Theme.of(context).dividerColor)),
+      child: Row(children: [
+        Icon(icon, color: SAMsTheme.primary, size: 20),
+        const SizedBox(width: 12),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
+          Text(value, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600)),
+        ]),
       ]),
-    ]),
+    ),
   );
 }

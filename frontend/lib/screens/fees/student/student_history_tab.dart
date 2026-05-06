@@ -73,7 +73,7 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: TextField(
                   onChanged: (v) => setState(() => _query = v),
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                   decoration: const InputDecoration(hintText: '🔍 Search transactions...'),
                 ),
               ),
@@ -91,11 +91,11 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
                         margin: const EdgeInsets.only(right: 8),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                         decoration: BoxDecoration(
-                          color: active ? SAMsTheme.primary.withOpacity(0.15) : SAMsTheme.surface,
+                          color: active ? SAMsTheme.primary.withOpacity(0.15) : Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: active ? SAMsTheme.primary.withOpacity(0.5) : SAMsTheme.border),
+                          border: Border.all(color: active ? SAMsTheme.primary.withOpacity(0.5) : Theme.of(context).dividerColor),
                         ),
-                        child: Text(f[0].toUpperCase() + f.substring(1), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: active ? SAMsTheme.primary : SAMsTheme.textSecondary)),
+                        child: Text(f[0].toUpperCase() + f.substring(1), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: active ? SAMsTheme.primary : Theme.of(context).textTheme.bodyMedium?.color)),
                       ),
                     );
                   }).toList(),
@@ -105,7 +105,7 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
               // List
               Expanded(
                 child: _filtered.isEmpty
-                    ? const Center(child: Text('No transactions found.', style: TextStyle(color: SAMsTheme.textMuted)))
+                    ? Center(child: Text('No transactions found.', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)))
                     : RefreshIndicator(
                         color: SAMsTheme.primary,
                         onRefresh: _load,
@@ -122,7 +122,7 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
                               onTap: status == 'pending' ? () => _continuePay(p) : null,
                               child: Container(
                               padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: status == 'pending' ? SAMsTheme.accent.withOpacity(0.4) : SAMsTheme.border)),
+                              decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: status == 'pending' ? SAMsTheme.accent.withOpacity(0.4) : Theme.of(context).dividerColor)),
                               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 Container(
                                   width: 40, height: 40,
@@ -132,13 +132,13 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                  Text(p['transactionId'] ?? 'Payment', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                                  Text(p['transactionId'] ?? 'Payment', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
                                   const SizedBox(height: 2),
-                                  Text(p['paidAt']?.toString().substring(0, 10) ?? '', style: const TextStyle(fontSize: 11, color: SAMsTheme.textMuted)),
-                                  Text.rich(TextSpan(text: '${p['bank'] ?? 'FPX'}  ·  ', style: const TextStyle(fontSize: 11, color: SAMsTheme.textMuted), children: [
+                                  Text(p['paidAt']?.toString().substring(0, 10) ?? '', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
+                                  Text.rich(TextSpan(text: '${p['bank'] ?? 'FPX'}  ·  ', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color), children: [
                                     TextSpan(text: status[0].toUpperCase() + status.substring(1), style: TextStyle(color: col, fontWeight: FontWeight.w700)),
                                   ])),
-                                  Text('#${p['transactionId'] ?? ''}', style: const TextStyle(fontSize: 10, color: SAMsTheme.textMuted, fontFamily: 'monospace')),
+                                  Text('#${p['transactionId'] ?? ''}', style: TextStyle(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color, fontFamily: 'monospace')),
                                 ])),
                                 Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                                   Text('RM ${((p['amount'] ?? 0) as num).toStringAsFixed(2)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: col)),

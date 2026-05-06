@@ -54,7 +54,7 @@ class _TreasuryStudentsTabState extends State<TreasuryStudentsTab> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: TextField(
             onChanged: (v) => setState(() => _query = v),
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             decoration: const InputDecoration(hintText: '🔍 Search by ID or Name...'),
           ),
         ),
@@ -76,7 +76,7 @@ class _TreasuryStudentsTabState extends State<TreasuryStudentsTab> {
         // Student list
         Expanded(
           child: _filtered.isEmpty
-              ? const Center(child: Text('No students found.', style: TextStyle(color: SAMsTheme.textMuted)))
+              ? Center(child: Text('No students found.', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)))
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
                   itemCount: _filtered.length,
@@ -90,7 +90,7 @@ class _TreasuryStudentsTabState extends State<TreasuryStudentsTab> {
 
                     return Container(
                       padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: SAMsTheme.border)),
+                      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: Theme.of(context).dividerColor)),
                       child: Row(children: [
                         // Avatar
                         Container(
@@ -100,9 +100,9 @@ class _TreasuryStudentsTabState extends State<TreasuryStudentsTab> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(student['name'] ?? 'Unknown', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
+                          Text(student['name'] ?? 'Unknown', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
                           const SizedBox(height: 2),
-                          Text('${student['studentId'] ?? ''} · ${student['program'] ?? ''}', style: const TextStyle(fontSize: 11, color: SAMsTheme.textMuted)),
+                          Text('${student['studentId'] ?? ''} · ${student['program'] ?? ''}', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
                           const SizedBox(height: 6),
                           Row(children: [
                             Container(
@@ -111,8 +111,8 @@ class _TreasuryStudentsTabState extends State<TreasuryStudentsTab> {
                               child: Text(status.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _statusColor(status))),
                             ),
                             const SizedBox(width: 10),
-                            if (!isPaid) Text('Due: RM ${balance.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white))
-                            else const Text('Cleared', style: TextStyle(fontSize: 12, color: SAMsTheme.textMuted)),
+                            if (!isPaid) Text('Due: RM ${balance.toStringAsFixed(2)}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface))
+                            else Text('Cleared', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
                           ]),
                         ])),
                         if (!isPaid) const Icon(Icons.notification_important, color: SAMsTheme.accent, size: 20),
@@ -133,11 +133,11 @@ class _TreasuryStudentsTabState extends State<TreasuryStudentsTab> {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: active ? SAMsTheme.primary.withOpacity(0.15) : SAMsTheme.surface,
+          color: active ? SAMsTheme.primary.withOpacity(0.15) : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? SAMsTheme.primary.withOpacity(0.5) : SAMsTheme.border),
+          border: Border.all(color: active ? SAMsTheme.primary.withOpacity(0.5) : Theme.of(context).dividerColor),
         ),
-        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: active ? SAMsTheme.primary : SAMsTheme.textSecondary)),
+        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: active ? SAMsTheme.primary : Theme.of(context).textTheme.bodyMedium?.color)),
       ),
     );
   }

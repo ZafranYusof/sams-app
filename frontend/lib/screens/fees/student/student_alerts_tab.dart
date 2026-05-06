@@ -22,10 +22,10 @@ class StudentAlertsTab extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${alerts.where((a) => a['read'] == false).length} unread', style: const TextStyle(color: SAMsTheme.textSecondary, fontSize: 13)),
+                Text('${alerts.where((a) => a['read'] == false).length} unread', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13)),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(8), border: Border.all(color: SAMsTheme.border)),
+                  decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(8), border: Border.all(color: Theme.of(context).dividerColor)),
                   child: const Text('Mark All Read', style: TextStyle(color: SAMsTheme.primary, fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
               ],
@@ -40,18 +40,18 @@ class StudentAlertsTab extends StatelessWidget {
                 final a = alerts[i];
                 return Container(
                   padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: SAMsTheme.border)),
+                  decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: Theme.of(context).dividerColor)),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(a['icon'] as String, style: const TextStyle(fontSize: 24)),
                       const SizedBox(width: 12),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(a['title'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text(a['title'] as String, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 4),
-                        Text(a['body'] as String, style: const TextStyle(fontSize: 12, color: SAMsTheme.textSecondary, height: 1.4)),
+                        Text(a['body'] as String, style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color, height: 1.4)),
                         const SizedBox(height: 6),
-                        Text(a['date'] as String, style: const TextStyle(fontSize: 11, color: SAMsTheme.textMuted)),
+                        Text(a['date'] as String, style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
                       ])),
                       if (a['read'] == false)
                         Container(width: 8, height: 8, margin: const EdgeInsets.only(top: 4), decoration: const BoxDecoration(color: SAMsTheme.primary, shape: BoxShape.circle)),

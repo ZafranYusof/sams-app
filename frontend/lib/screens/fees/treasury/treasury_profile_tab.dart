@@ -19,18 +19,18 @@ class TreasuryProfileTab extends ConsumerWidget {
             child: const Center(child: Icon(Icons.admin_panel_settings, color: Colors.white, size: 36)),
           )),
           const SizedBox(height: 16),
-          const Center(child: Text('Treasury Admin', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700))),
-          const Center(child: Text('admin@sams.edu.my', style: TextStyle(color: SAMsTheme.textMuted, fontSize: 13))),
+          Center(child: Text('Treasury Admin', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20, fontWeight: FontWeight.w700))),
+          Center(child: Text('admin@sams.edu.my', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13))),
           const SizedBox(height: 32),
           Container(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: SAMsTheme.border)),
-            child: const Row(children: [
-              Icon(Icons.verified_user, color: SAMsTheme.success, size: 20),
-              SizedBox(width: 12),
+            decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: Theme.of(context).dividerColor)),
+            child: Row(children: [
+              const Icon(Icons.verified_user, color: SAMsTheme.success, size: 20),
+              const SizedBox(width: 12),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Role', style: TextStyle(fontSize: 11, color: SAMsTheme.textMuted)),
-                Text('Treasury Administrator', style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w600)),
+                Text('Role', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
+                Text('Treasury Administrator', style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600)),
               ]),
             ]),
           ),

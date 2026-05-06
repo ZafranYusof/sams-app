@@ -46,7 +46,7 @@ class _TreasuryDashboardTabState extends State<TreasuryDashboardTab> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Overview', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+          Text('Overview', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 16),
           // Stats row
           Row(children: [
@@ -59,21 +59,21 @@ class _TreasuryDashboardTabState extends State<TreasuryDashboardTab> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: SAMsTheme.border)),
+            decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: Theme.of(context).dividerColor)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('⚠️ Gross Outstanding', style: TextStyle(color: SAMsTheme.textSecondary, fontSize: 13)),
+              Text('⚠️ Gross Outstanding', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13)),
               const SizedBox(height: 6),
-              Text('RM ${_outstanding.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
+              Text('RM ${_outstanding.toStringAsFixed(2)}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 26, fontWeight: FontWeight.w800)),
             ]),
           ),
           const SizedBox(height: 20),
 
           // Fee Status Distribution
-          const Text('Fee Status Distribution', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+          Text('Fee Status Distribution', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: SAMsTheme.border)),
+            decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: Theme.of(context).dividerColor)),
             child: Column(children: [
               _distRow('🟢', 'Fully Paid', '$_fullyPaid students', SAMsTheme.success),
               const SizedBox(height: 12),
@@ -89,9 +89,9 @@ class _TreasuryDashboardTabState extends State<TreasuryDashboardTab> {
 
   Widget _statCard(String label, String value, Color color) => Container(
     padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: SAMsTheme.border)),
+    decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: Theme.of(context).dividerColor)),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(fontSize: 12, color: SAMsTheme.textSecondary)),
+      Text(label, style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color)),
       const SizedBox(height: 8),
       Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: color)),
     ]),
@@ -100,7 +100,7 @@ class _TreasuryDashboardTabState extends State<TreasuryDashboardTab> {
   Widget _distRow(String dot, String label, String value, Color color) => Row(children: [
     Text(dot, style: const TextStyle(fontSize: 16)),
     const SizedBox(width: 10),
-    Expanded(child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white))),
+    Expanded(child: Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface))),
     Text(value, style: TextStyle(fontSize: 13, color: color, fontWeight: FontWeight.w600)),
   ]);
 }

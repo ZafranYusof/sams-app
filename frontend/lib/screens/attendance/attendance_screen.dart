@@ -73,15 +73,15 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             ),
             child: Column(
               children: [
-                Text('${stats['percentage'] ?? 0}%', style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w700)),
+                Text('${stats['percentage'] ?? 0}%', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 48, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                const Text('Overall Attendance', style: TextStyle(color: SAMsTheme.textSecondary)),
+                Text('Overall Attendance', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _miniStat('Present', '${stats['present'] ?? 0}', SAMsTheme.success),
-                    _miniStat('Total', '${stats['total'] ?? 0}', SAMsTheme.textSecondary),
+                    _miniStat('Total', '${stats['total'] ?? 0}', Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey),
                   ],
                 ),
               ],
@@ -91,7 +91,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           Text('Recent Records', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
           if (records.isEmpty)
-            const Center(child: Padding(padding: EdgeInsets.all(32), child: Text('No attendance records yet', style: TextStyle(color: SAMsTheme.textMuted))))
+            Center(child: Padding(padding: const EdgeInsets.all(32), child: Text('No attendance records yet', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color))))
           else
             ...records.take(20).map((record) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -101,8 +101,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                     record['status'] == 'present' ? Icons.check_circle : record['status'] == 'late' ? Icons.access_time : Icons.cancel,
                     color: record['status'] == 'present' ? SAMsTheme.success : record['status'] == 'late' ? SAMsTheme.warning : SAMsTheme.error,
                   ),
-                  title: Text(record['course']?['name'] ?? 'Course', style: const TextStyle(color: Colors.white, fontSize: 14)),
-                  subtitle: Text(record['date']?.toString().substring(0, 10) ?? '', style: const TextStyle(color: SAMsTheme.textMuted, fontSize: 12)),
+                  title: Text(record['course']?['name'] ?? 'Course', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
+                  subtitle: Text(record['date']?.toString().substring(0, 10) ?? '', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -123,7 +123,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     return Column(
       children: [
         Text(value, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w700)),
-        Text(label, style: const TextStyle(color: SAMsTheme.textMuted, fontSize: 12)),
+        Text(label, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
       ],
     );
   }
@@ -141,9 +141,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: SAMsTheme.surface,
-        title: const Text('Scan QR Code', style: TextStyle(color: Colors.white)),
-        content: const Text('QR scanner will open here.\nFor now, use manual check-in.', style: TextStyle(color: SAMsTheme.textSecondary)),
+        backgroundColor: Theme.of(context).cardColor,
+        title: Text('Scan QR Code', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        content: Text('QR scanner will open here.\nFor now, use manual check-in.', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
         ],

@@ -30,21 +30,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _pickImage() async {
     showModalBottomSheet(
       context: context,
-      backgroundColor: SAMsTheme.surface,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Change Profile Picture', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+          Text('Change Profile Picture', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 20),
           ListTile(
             leading: Container(width: 40, height: 40, decoration: BoxDecoration(color: SAMsTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.camera_alt, color: SAMsTheme.primary, size: 20)),
-            title: const Text('Take Photo', style: TextStyle(color: Colors.white)),
+            title: Text('Take Photo', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             onTap: () { Navigator.pop(context); _getImage(ImageSource.camera); },
           ),
           ListTile(
             leading: Container(width: 40, height: 40, decoration: BoxDecoration(color: SAMsTheme.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.photo_library, color: SAMsTheme.accent, size: 20)),
-            title: const Text('Choose from Gallery', style: TextStyle(color: Colors.white)),
+            title: Text('Choose from Gallery', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             onTap: () { Navigator.pop(context); _getImage(ImageSource.gallery); },
           ),
           if (_imagePath != null)
@@ -119,9 +119,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           )),
           const SizedBox(height: 16),
-          Center(child: Text(name, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700))),
+          Center(child: Text(name, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.w700))),
           const SizedBox(height: 4),
-          Center(child: Text(email, style: const TextStyle(color: SAMsTheme.textSecondary, fontSize: 13))),
+          Center(child: Text(email, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13))),
           const SizedBox(height: 6),
           Center(child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -131,7 +131,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 32),
 
           // Info cards
-          const Text('Personal Info', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+          Text('Personal Info', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
           _infoCard(Icons.badge_outlined, 'Student ID', studentId),
           _infoCard(Icons.business_outlined, 'Faculty', faculty),
@@ -140,7 +140,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _infoCard(Icons.email_outlined, 'Email', email),
 
           const SizedBox(height: 32),
-          const Text('Settings', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+          Text('Settings', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
           _settingsItem(Icons.notifications_outlined, 'Notifications', () {}),
           _settingsItem(Icons.lock_outlined, 'Change Password', () {}),
@@ -166,14 +166,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _infoCard(IconData icon, String label, String value) => Container(
     margin: const EdgeInsets.only(bottom: 10),
     padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: SAMsTheme.border)),
+    decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: Theme.of(context).dividerColor)),
     child: Row(children: [
       Container(width: 38, height: 38, decoration: BoxDecoration(color: SAMsTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: SAMsTheme.primary, size: 18)),
       const SizedBox(width: 14),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: SAMsTheme.textMuted)),
+        Text(label, style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
         const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w600)),
+        Text(value, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600)),
       ])),
     ]),
   );
@@ -183,12 +183,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     child: Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: SAMsTheme.border)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Row(children: [
-        Icon(icon, color: SAMsTheme.textSecondary, size: 20),
+        Icon(icon, color: Theme.of(context).textTheme.bodyMedium?.color, size: 20),
         const SizedBox(width: 14),
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 14, color: Colors.white))),
-        const Icon(Icons.chevron_right, color: SAMsTheme.textMuted, size: 20),
+        Expanded(child: Text(label, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface))),
+        Icon(Icons.chevron_right, color: Theme.of(context).textTheme.bodySmall?.color, size: 20),
       ]),
     ),
   );

@@ -66,7 +66,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> with Si
           controller: _tabController,
           indicatorColor: SAMsTheme.primary,
           labelColor: SAMsTheme.primary,
-          unselectedLabelColor: SAMsTheme.textMuted,
+          unselectedLabelColor: Theme.of(context).textTheme.bodySmall?.color,
           tabs: const [Tab(text: 'Available'), Tab(text: 'My Courses')],
         ),
       ),
@@ -81,7 +81,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> with Si
 
   Widget _buildCourseList() {
     if (_courses.isEmpty) {
-      return const Center(child: Text('No courses available', style: TextStyle(color: SAMsTheme.textMuted)));
+      return Center(child: Text('No courses available', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -93,14 +93,14 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> with Si
           child: GlassCard(
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
-              title: Text(course['name'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+              title: Text(course['name'] ?? '', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500)),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
-                  Text('${course['code']} | ${course['creditHours']} credits', style: const TextStyle(color: SAMsTheme.textMuted, fontSize: 12)),
+                  Text('${course['code']} | ${course['creditHours']} credits', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
                   const SizedBox(height: 4),
-                  Text('${course['enrolled']}/${course['capacity']} enrolled', style: const TextStyle(color: SAMsTheme.textSecondary, fontSize: 12)),
+                  Text('${course['enrolled']}/${course['capacity']} enrolled', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12)),
                 ],
               ),
               trailing: ElevatedButton(
@@ -117,7 +117,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> with Si
 
   Widget _buildMyRegistrations() {
     if (_myRegistrations.isEmpty) {
-      return const Center(child: Text('No registered courses', style: TextStyle(color: SAMsTheme.textMuted)));
+      return Center(child: Text('No registered courses', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -131,8 +131,8 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> with Si
           child: GlassCard(
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
-              title: Text(course['name'] ?? 'Unknown', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-              subtitle: Text(course['code'] ?? '', style: const TextStyle(color: SAMsTheme.textMuted, fontSize: 12)),
+              title: Text(course['name'] ?? 'Unknown', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500)),
+              subtitle: Text(course['code'] ?? '', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
