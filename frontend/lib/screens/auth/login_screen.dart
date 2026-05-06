@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../home/main_shell.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -33,6 +34,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+
+    // Navigate to home when authenticated
+    ref.listen<AuthState>(authProvider, (prev, next) {
+      if (next.isAuthenticated && !(prev?.isAuthenticated ?? false)) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainShell()),
+          (route) => false,
+        );
+      }
+    });
 
     return Scaffold(
       body: SafeArea(

@@ -25,7 +25,8 @@ class SAMsApp extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final themeState = ref.watch(themeProvider);
 
-    final home = authState.isAuthenticated ? const MainShell() : const LoginScreen();
+    // After splash, land on login or home based on auth state
+    final destination = authState.isAuthenticated ? const MainShell() : const LoginScreen();
 
     return MaterialApp(
       title: 'SAMs',
@@ -33,7 +34,7 @@ class SAMsApp extends ConsumerWidget {
       theme: SAMsLightTheme.theme,
       darkTheme: SAMsTheme.darkTheme,
       themeMode: themeState.isDark ? ThemeMode.dark : ThemeMode.light,
-      home: SplashScreen(nextScreen: home),
+      home: SplashScreen(nextScreen: destination),
     );
   }
 }
