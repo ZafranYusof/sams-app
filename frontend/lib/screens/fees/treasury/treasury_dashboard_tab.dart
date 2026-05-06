@@ -168,7 +168,7 @@ class _TreasuryDashboardTabState extends ConsumerState<TreasuryDashboardTab> {
     final user = ref.watch(authProvider).user;
     final name = user?['name'] ?? 'Admin';
 
-    if (_loading) return Scaffold(appBar: AppBar(title: const Text('Treasury')), body: const Center(child: CircularProgressIndicator(color: SAMsTheme.primary)));
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator(color: SAMsTheme.primary)));
 
     return Scaffold(
       body: SafeArea(
