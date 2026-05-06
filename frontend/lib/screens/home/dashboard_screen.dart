@@ -1,145 +1,467 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/stat_card.dart';
-import '../../widgets/glass_card.dart';
+import '../../providers/theme_provider.dart';
+import '../../providers/language_provider.dart';
+import '../registration/registration_screen.dart';
+import '../attendance/attendance_screen.dart';
+import '../curriculum/curriculum_screen.dart';
+import '../fees/fees_screen.dart';
+import 'profile_screen.dart';
+import '../../widgets/page_transitions.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  String? _profileImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() => _profileImage = prefs.getString('profile_image'));
+  }
+
+  Future<void> _refresh() async {
+    await _loadProfileImage();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user;
     final name = user?['name'] ?? 'Student';
+    final lang = ref.watch(languageProvider).locale;
 
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
+        child: RefreshIndicator(
+          color: SAMsTheme.primary,
+          onRefresh: _refresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              // ─── HEADER ───
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF003566), Color(0xFF0077B6), Color(0xFF00B4D8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: IntrinsicHeight(
+                  child: Row(
                     children: [
-                      Text('Hi, $name', style: Theme.of(context).textTheme.headlineMedium),
-                      const SizedBox(height: 4),
-                      Text('Welcome to SAMs', style: Theme.of(context).textTheme.bodyMedium),
+                      Expanded(
+                        flex: 5,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset('assets/images/umpsa_logo.png', width: 90, height: 90, fit: BoxFit.contain),
+                            const SizedBox(height: 8),
+                            const Text('\u0627\u0648\u0646\u064a\u06cf\u0631\u0633\u064a\u062a\u064a \u0645\u0644\u064a\u0633\u064a\u0627 \u06a4\u0647\u06a0 \u0627\u0644\u0633\u0644\u0637\u0627\u0646 \u0639\u0628\u062f \u0627\u0644\u0644\u0647', style: TextStyle(color: Colors.white, fontSize: 9), textAlign: TextAlign.center),
+                            const Text('UNIVERSITI MALAYSIA PAHANG', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                            const Text('AL-SULTAN ABDULLAH', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
+                          ],
+                        ),
+                      ),
+                      Container(width: 2.5, height: 120, margin: const EdgeInsets.symmetric(horizontal: 4), decoration: BoxDecoration(color: const Color(0xFFD4A843), borderRadius: BorderRadius.circular(2))),
+                      Expanded(
+                        flex: 3,
+                        child: GestureDetector(
+                          onTap: () => _showProfileMenu(context, ref),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 48, height: 48,
+                                decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white.withOpacity(0.2))),
+                                child: const Icon(Icons.school_rounded, color: Colors.white, size: 28),
+                              ),
+                              const SizedBox(height: 10),
+                              const Text('SAMs', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+                              const SizedBox(height: 2),
+                              const Text('UMPSA', style: TextStyle(color: Color(0xFF48CAE4), fontSize: 13, fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  GestureDetector(
-                    onTap: () => _showProfileMenu(context, ref),
-                    child: Container(
-                      width: 44,
-                      height: 44,
+                ),
+              ),
+
+              // ─── STUDENT INFO CARD (ADAB style) ───
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0F7FA),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4))],
+                ),
+                child: Row(
+                  children: [
+                    // Avatar circle
+                    Container(
+                      width: 64, height: 64,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [SAMsTheme.primary, SAMsTheme.primaryLight]),
-                        borderRadius: BorderRadius.circular(12),
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        border: Border.all(color: const Color(0xFF00B4D8), width: 2),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 6)],
+                        image: _profileImage != null ? DecorationImage(image: FileImage(File(_profileImage!)), fit: BoxFit.cover) : null,
                       ),
-                      child: Center(
-                        child: Text(name[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
-                      ),
+                      child: _profileImage == null ? Center(child: Text(name[0].toUpperCase(), style: const TextStyle(color: Color(0xFF003566), fontSize: 26, fontWeight: FontWeight.w800))) : null,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              // Stats Grid
-              Row(
-                children: [
-                  Expanded(child: StatCard(icon: Icons.menu_book, label: 'Courses', value: '5', color: SAMsTheme.primary)),
-                  const SizedBox(width: 12),
-                  Expanded(child: StatCard(icon: Icons.fact_check, label: 'Attendance', value: '87%', color: SAMsTheme.success)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: StatCard(icon: Icons.emoji_events, label: 'Activities', value: '3', color: SAMsTheme.accent)),
-                  const SizedBox(width: 12),
-                  Expanded(child: StatCard(icon: Icons.payments, label: 'Fees Due', value: 'RM 2,450', color: SAMsTheme.error)),
-                ],
-              ),
-              const SizedBox(height: 28),
-              // Quick Actions
-              Text('Quick Actions', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 16),
-              GlassCard(
-                child: ListTile(
-                  leading: Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(color: SAMsTheme.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.qr_code_scanner, color: SAMsTheme.primary, size: 20),
-                  ),
-                  title: const Text('Scan Attendance QR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                  subtitle: const Text('Check in to your class', style: TextStyle(color: SAMsTheme.textMuted, fontSize: 12)),
-                  trailing: const Icon(Icons.chevron_right, color: SAMsTheme.textMuted),
+                    const SizedBox(width: 16),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(name.toUpperCase(), style: const TextStyle(color: Color(0xFF1A1A2E), fontSize: 15, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 6),
+                      Text('SARJANA MUDA SAINS KOMPUTER\n(KEJURUTERAAN PERISIAN)\nDENGAN KEPUJIAN', style: TextStyle(color: Colors.grey[700], fontSize: 11, height: 1.4)),
+                    ])),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              GlassCard(
-                child: ListTile(
-                  leading: Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(color: SAMsTheme.accent.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.payment, color: SAMsTheme.accent, size: 20),
-                  ),
-                  title: const Text('Pay Tuition Fees', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                  subtitle: const Text('Outstanding: RM 2,450', style: TextStyle(color: SAMsTheme.textMuted, fontSize: 12)),
-                  trailing: const Icon(Icons.chevron_right, color: SAMsTheme.textMuted),
+
+              // ─── FEATURED CARDS (horizontal scroll) ───
+              Padding(padding: const EdgeInsets.fromLTRB(20, 18, 20, 10), child: Text(t('featured', lang), style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 17, fontWeight: FontWeight.w700))),
+              SizedBox(
+                height: 140,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    _FeaturedCard(
+                      gradient: const [Color(0xFF667EEA), Color(0xFF764BA2)],
+                      icon: Icons.payments_rounded,
+                      title: 'Tuition Fees',
+                      subtitle: 'Check balance & pay',
+                      onTap: () => Navigator.push(context, SlidePageRoute(page: const FeesScreen())),
+                    ),
+                    _FeaturedCard(
+                      gradient: const [Color(0xFF11998E), Color(0xFF38EF7D)],
+                      icon: Icons.fact_check_rounded,
+                      title: 'Attendance',
+                      subtitle: 'QR check-in',
+                      onTap: () => Navigator.push(context, SlidePageRoute(page: const AttendanceScreen())),
+                    ),
+                    _FeaturedCard(
+                      gradient: const [Color(0xFFFC5C7D), Color(0xFF6A82FB)],
+                      icon: Icons.emoji_events_rounded,
+                      title: 'Activities',
+                      subtitle: 'Join events & clubs',
+                      onTap: () => Navigator.push(context, SlidePageRoute(page: const CurriculumScreen())),
+                    ),
+                    _FeaturedCard(
+                      gradient: const [Color(0xFFF7971E), Color(0xFFFFD200)],
+                      icon: Icons.app_registration_rounded,
+                      title: 'Registration',
+                      subtitle: 'Add/drop courses',
+                      onTap: () => Navigator.push(context, SlidePageRoute(page: const RegistrationScreen())),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              GlassCard(
-                child: ListTile(
-                  leading: Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(color: SAMsTheme.success.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.add_circle_outline, color: SAMsTheme.success, size: 20),
-                  ),
-                  title: const Text('Register Course', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                  subtitle: const Text('Add/drop courses', style: TextStyle(color: SAMsTheme.textMuted, fontSize: 12)),
-                  trailing: const Icon(Icons.chevron_right, color: SAMsTheme.textMuted),
+
+              // ─── MODULES GRID ───
+              Padding(padding: const EdgeInsets.fromLTRB(20, 20, 20, 12), child: Text(t('modules', lang), style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 17, fontWeight: FontWeight.w700))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GridView.count(
+                  crossAxisCount: 4,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 0.85,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 16,
+                  children: [
+                    _GridItem(icon: Icons.app_registration_rounded, label: 'Registration', color: SAMsTheme.primary, onTap: () => Navigator.push(context, SlidePageRoute(page: const RegistrationScreen()))),
+                    _GridItem(icon: Icons.fact_check_rounded, label: 'Attendance', color: SAMsTheme.success, onTap: () => Navigator.push(context, SlidePageRoute(page: const AttendanceScreen()))),
+                    _GridItem(icon: Icons.emoji_events_rounded, label: 'Activities', color: SAMsTheme.accent, onTap: () => Navigator.push(context, SlidePageRoute(page: const CurriculumScreen()))),
+                    _GridItem(icon: Icons.payments_rounded, label: 'Tuition Fees', color: SAMsTheme.error, onTap: () => Navigator.push(context, SlidePageRoute(page: const FeesScreen()))),
+                  ],
                 ),
               ),
+
+              // ─── QUICK LINKS ───
+              Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 12), child: Text(t('quick_links', lang), style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 17, fontWeight: FontWeight.w700))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GridView.count(
+                  crossAxisCount: 4,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 0.85,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 16,
+                  children: [
+                    _CircleItem(icon: Icons.fastfood_rounded, label: 'e-Kupon Kaseh', color: const Color(0xFFF59E0B), bgColor: const Color(0xFFFEF3C7), onTap: () {}),
+                    _CircleItem(icon: Icons.emergency_rounded, label: 'Emergency', color: const Color(0xFFEF4444), bgColor: const Color(0xFFFEE2E2), onTap: () {}),
+                    _CircleItem(icon: Icons.laptop_rounded, label: 'EDasar', color: const Color(0xFF3B82F6), bgColor: const Color(0xFFDBEAFE), onTap: () {}),
+                    _CircleItem(icon: Icons.school_rounded, label: 'Alumni', color: const Color(0xFF6366F1), bgColor: const Color(0xFFE0E7FF), onTap: () {}),
+                    _CircleItem(icon: Icons.directions_bus_rounded, label: 'Bus Schedules', color: const Color(0xFFEF4444), bgColor: const Color(0xFFFEE2E2), onTap: () {}),
+                    _CircleItem(icon: Icons.quiz_rounded, label: 'FAQ', color: const Color(0xFF10B981), bgColor: const Color(0xFFD1FAE5), onTap: () {}),
+                    _CircleItem(icon: Icons.wb_sunny_rounded, label: 'Weather', color: const Color(0xFFF59E0B), bgColor: const Color(0xFFFEF3C7), onTap: () {}),
+                    _CircleItem(icon: Icons.location_on_rounded, label: 'UMPSA Map', color: const Color(0xFF0EA5E9), bgColor: const Color(0xFFE0F2FE), onTap: () {}),
+                    _CircleItem(icon: Icons.calendar_month_rounded, label: 'Calendar', color: const Color(0xFFEC4899), bgColor: const Color(0xFFFCE7F3), onTap: () {}),
+                    _CircleItem(icon: Icons.restaurant_rounded, label: 'Cafetaria', color: const Color(0xFF6366F1), bgColor: const Color(0xFFE0E7FF), onTap: () {}),
+                    _CircleItem(icon: Icons.newspaper_rounded, label: 'News', color: const Color(0xFF3B82F6), bgColor: const Color(0xFFDBEAFE), onTap: () {}),
+                    _CircleItem(icon: Icons.mosque_rounded, label: 'Prayer Time', color: const Color(0xFF10B981), bgColor: const Color(0xFFD1FAE5), onTap: () {}),
+                  ],
+                ),
+              ),
+
+              // ─── BANNER ───
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF1A3A5F), Color(0xFF0D2847)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: SAMsTheme.primary.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const Text('FOOD@CAMPUS', style: TextStyle(color: Color(0xFF48CAE4), fontSize: 18, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 4),
+                      const Text('UMPSA E-Coupon', style: TextStyle(color: SAMsTheme.accent, fontSize: 14, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
+                      Text('Redeem your meal vouchers at any campus cafeteria', style: TextStyle(color: SAMsTheme.textSecondary, fontSize: 11)),
+                    ])),
+                    Container(
+                      width: 60, height: 60,
+                      decoration: BoxDecoration(color: SAMsTheme.accent.withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
+                      child: const Icon(Icons.restaurant_menu_rounded, color: SAMsTheme.accent, size: 30),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ─── ANNOUNCEMENTS ───
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: SAMsTheme.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: SAMsTheme.border),
+                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    const Icon(Icons.campaign_rounded, color: SAMsTheme.accent, size: 20),
+                    const SizedBox(width: 8),
+                    Text(t('announcements', lang), style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w700)),
+                    const Spacer(),
+                    Text('View all', style: TextStyle(color: SAMsTheme.primary, fontSize: 12)),
+                  ]),
+                  const SizedBox(height: 12),
+                  _announcementItem('Registration for Sem 1 2026/2027 opens 15 June', '2 days ago'),
+                  _announcementItem('Library extended hours during exam week', '5 days ago'),
+                  _announcementItem('Convocation ceremony rescheduled to 20 July', '1 week ago'),
+                ]),
+              ),
+
+              // ─── FACILITIES CHIPS ───
+              Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 10), child: Text(t('facilities', lang), style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 17, fontWeight: FontWeight.w700))),
+              SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: ['Residency', 'Sport Complex', 'Library', 'Health Centre', 'Lab', 'Dewan', 'Mosque'].map((f) => Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(color: SAMsTheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: SAMsTheme.border)),
+                    child: Text(f, style: const TextStyle(color: SAMsTheme.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 32),
             ],
           ),
+        ),
         ),
       ),
     );
   }
 
+  static Widget _announcementItem(String text, String time) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Container(width: 6, height: 6, margin: const EdgeInsets.only(top: 6), decoration: const BoxDecoration(color: SAMsTheme.primary, shape: BoxShape.circle)),
+      const SizedBox(width: 10),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(text, style: const TextStyle(color: SAMsTheme.textSecondary, fontSize: 12, height: 1.3)),
+        const SizedBox(height: 2),
+        Text(time, style: const TextStyle(color: SAMsTheme.textMuted, fontSize: 10)),
+      ])),
+    ]),
+  );
+
   void _showProfileMenu(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: SAMsTheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      builder: (ctx) {
+        final isDark = ref.read(themeProvider).isDark;
+        final lang = ref.read(languageProvider).locale;
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
             ListTile(
-              leading: const Icon(Icons.person_outline, color: SAMsTheme.textSecondary),
-              title: const Text('Profile', style: TextStyle(color: Colors.white)),
-              onTap: () => Navigator.pop(context),
+              leading: const Icon(Icons.person_outline),
+              title: const Text('Profile'),
+              onTap: () async { Navigator.pop(ctx); await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())); _loadProfileImage(); },
+            ),
+            ListTile(
+              leading: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+              title: Text(isDark ? 'Light Mode' : 'Dark Mode'),
+              onTap: () { Navigator.pop(ctx); ref.read(themeProvider.notifier).toggle(); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.language),
+              title: Text(lang == 'en' ? 'Bahasa Melayu' : 'English'),
+              onTap: () { Navigator.pop(ctx); ref.read(languageProvider.notifier).toggle(); },
             ),
             ListTile(
               leading: const Icon(Icons.logout, color: SAMsTheme.error),
               title: const Text('Logout', style: TextStyle(color: SAMsTheme.error)),
-              onTap: () {
-                Navigator.pop(context);
-                ref.read(authProvider.notifier).logout();
-              },
+              onTap: () { Navigator.pop(ctx); ref.read(authProvider.notifier).logout(); },
             ),
-          ],
+          ]),
+        );
+      },
+    );
+  }
+}
+
+// ─── FEATURED CARD with scale animation ───
+class _FeaturedCard extends StatefulWidget {
+  final List<Color> gradient;
+  final IconData icon;
+  final String title, subtitle;
+  final VoidCallback onTap;
+  const _FeaturedCard({required this.gradient, required this.icon, required this.title, required this.subtitle, required this.onTap});
+
+  @override
+  State<_FeaturedCard> createState() => _FeaturedCardState();
+}
+
+class _FeaturedCardState extends State<_FeaturedCard> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.95),
+      onTapUp: (_) { setState(() => _scale = 1.0); HapticFeedback.lightImpact(); widget.onTap(); },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: widget.gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: widget.gradient[0].withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
         ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
+            child: Icon(widget.icon, color: Colors.white, size: 22),
+          ),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(widget.title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 2),
+            Text(widget.subtitle, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
+          ]),
+        ]),
       ),
+      ),
+    );
+  }
+}
+
+// ─── GRID ITEM ───
+class _GridItem extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _GridItem({required this.icon, required this.label, required this.color, required this.onTap});
+
+  @override
+  State<_GridItem> createState() => _GridItemState();
+}
+
+class _GridItemState extends State<_GridItem> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.9),
+      onTapUp: (_) { setState(() => _scale = 1.0); HapticFeedback.selectionClick(); widget.onTap(); },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 100),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Container(
+            width: 52, height: 52,
+            decoration: BoxDecoration(color: widget.color.withOpacity(0.12), borderRadius: BorderRadius.circular(14)),
+            child: Icon(widget.icon, color: widget.color, size: 26),
+          ),
+          const SizedBox(height: 8),
+          Text(widget.label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 11, fontWeight: FontWeight.w500, height: 1.2)),
+        ]),
+      ),
+    );
+  }
+}
+
+// ─── CIRCLE ITEM ───
+class _CircleItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color, bgColor;
+  final VoidCallback onTap;
+  const _CircleItem({required this.icon, required this.label, required this.color, required this.bgColor, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Container(width: 52, height: 52, decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle), child: Icon(icon, color: color, size: 24)),
+        const SizedBox(height: 6),
+        Text(label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 10, fontWeight: FontWeight.w500, height: 1.2)),
+      ]),
     );
   }
 }
