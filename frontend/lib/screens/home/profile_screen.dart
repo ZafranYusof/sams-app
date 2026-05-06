@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -151,7 +152,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           SizedBox(width: double.infinity, height: 52, child: ElevatedButton.icon(
             onPressed: () {
               ref.read(authProvider.notifier).logout();
-              Navigator.pop(context);
+              Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
             },
             icon: const Icon(Icons.logout, size: 20),
             label: const Text('Logout', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),

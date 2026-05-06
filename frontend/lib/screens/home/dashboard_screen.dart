@@ -9,6 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
+import '../auth/login_screen.dart';
 import '../registration/registration_screen.dart';
 import '../attendance/attendance_screen.dart';
 import '../curriculum/curriculum_screen.dart';
@@ -401,7 +402,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ListTile(
               leading: const Icon(Icons.logout, color: SAMsTheme.error),
               title: const Text('Logout', style: TextStyle(color: SAMsTheme.error)),
-              onTap: () { Navigator.pop(ctx); ref.read(authProvider.notifier).logout(); },
+              onTap: () { Navigator.pop(ctx); ref.read(authProvider.notifier).logout(); Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false); },
             ),
           ]),
         );

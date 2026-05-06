@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme.dart';
 import '../../../providers/auth_provider.dart';
+import '../../auth/login_screen.dart';
 
 class TreasuryProfileTab extends ConsumerWidget {
   const TreasuryProfileTab({super.key});
@@ -36,7 +37,7 @@ class TreasuryProfileTab extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
           SizedBox(width: double.infinity, height: 48, child: ElevatedButton.icon(
-            onPressed: () { ref.read(authProvider.notifier).logout(); Navigator.pop(context); },
+            onPressed: () { ref.read(authProvider.notifier).logout(); Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false); },
             icon: const Icon(Icons.logout, size: 18),
             label: const Text('Logout'),
             style: ElevatedButton.styleFrom(backgroundColor: SAMsTheme.error, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
