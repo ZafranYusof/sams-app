@@ -13,7 +13,24 @@ const paymentsRoutes = require('./routes/payments');
 const notificationsRoutes = require('./routes/notifications');
 const paymentGatewayRoutes = require('./routes/payment-gateway');
 
+const Payment = require('./models/Payment');
+
 const app = express();
+
+// Expire pending payments older than 10 minutes (runs every 2 min)
+setInterval(async () => {
+  try {
+    const result = await Payment.updateMany(
+      { status: 'pending', expiresAt: { $lte: new Date() } },
+      { $set: { status: 'expired' } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`[Payment] Expired ${result.modifiedCount} pending payment(s)`);
+    }
+  } catch (err) {
+    console.error('[Payment] Expiry check error:', err.message);
+  }
+}, 2 * 60 * 1000);
 
 // Middleware
 app.use(cors());

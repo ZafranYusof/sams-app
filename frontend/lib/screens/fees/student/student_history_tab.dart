@@ -64,8 +64,9 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
   void _viewPaymentDetail(Map<String, dynamic> p) {
     final status = p['status'] ?? 'pending';
     final isSuccess = status == 'success';
-    final col = isSuccess ? SAMsTheme.success : (status == 'failed' ? SAMsTheme.error : SAMsTheme.accent);
-    final statusLabel = isSuccess ? '✅ Success' : (status == 'failed' ? '❌ Failed' : '⏳ Pending');
+    final isExpired = status == 'expired';
+    final col = isSuccess ? SAMsTheme.success : ((status == 'failed' || isExpired) ? SAMsTheme.error : SAMsTheme.accent);
+    final statusLabel = isSuccess ? '✅ Success' : (status == 'failed' ? '❌ Failed' : (isExpired ? '⏰ Expired' : '⏳ Pending'));
     
     // Parse date properly (ISO 8601 from backend)
     DateTime? paidDate;
@@ -194,7 +195,7 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: ['all', 'success', 'failed', 'pending'].map((f) {
+                  children: ['all', 'success', 'failed', 'pending', 'expired'].map((f) {
                     final active = _filter == f;
                     return GestureDetector(
                       onTap: () => setState(() => _filter = f),
