@@ -22,7 +22,7 @@ setInterval(async () => {
   try {
     const result = await Payment.updateMany(
       { status: 'pending', expiresAt: { $lte: new Date() } },
-      { $set: { status: 'expired' } }
+      { $set: { status: 'failed' } }
     );
     if (result.modifiedCount > 0) {
       console.log(`[Payment] Expired ${result.modifiedCount} pending payment(s)`);
