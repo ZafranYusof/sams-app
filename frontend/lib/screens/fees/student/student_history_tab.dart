@@ -61,6 +61,117 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
     return matchQ && matchF;
   }).toList();
 
+  void _viewPaymentDetail(Map<String, dynamic> p) {
+    final status = p['status'] ?? 'pending';
+    final isSuccess = status == 'success';
+    final col = isSuccess ? SAMsTheme.success : (status == 'failed' ? SAMsTheme.error : SAMsTheme.accent);
+    final statusLabel = isSuccess ? '✅ Success' : (status == 'failed' ? '❌ Failed' : '⏳ Pending');
+    
+    // Parse date properly (ISO 8601 from backend)
+    DateTime? paidDate;
+    if (p['paidAt'] != null) {
+      paidDate = DateTime.tryParse(p['paidAt'].toString());
+    }
+    final dateStr = paidDate != null
+        ? '${paidDate.day.toString().padLeft(2, '0')}/${paidDate.month.toString().padLeft(2, '0')}/${paidDate.year}'
+        : '–';
+    final timeStr = paidDate != null
+        ? '${paidDate.toLocal().hour.toString().padLeft(2, '0')}:${paidDate.toLocal().minute.toString().padLeft(2, '0')}'
+        : '–';
+    
+    // Get bank name
+    final bank = p['bank'] as String? ?? (p['method'] == 'card' ? 'Card Payment' : 'FPX Bank');
+    
+    // Get fee description from populated fee object
+    String description = 'Tuition Fee Payment';
+    if (p['fee'] != null && p['fee'] is Map) {
+      final fee = p['fee'] as Map<String, dynamic>;
+      if (fee['items'] != null && (fee['items'] as List).isNotEmpty) {
+        description = (fee['items'] as List).map((item) => item['description'] ?? '').where((d) => d.isNotEmpty).join(', ');
+      } else if (fee['semester'] != null) {
+        description = 'Semester ${fee['semester']} Fees';
+      }
+      if (description.isEmpty) description = 'Tuition Fee Payment';
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Text('Payment Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: col.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: col.withOpacity(0.3)),
+              ),
+              child: Text(statusLabel, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: col)),
+            ),
+            const SizedBox(height: 20),
+            Text('RM ${((p['amount'] ?? 0) as num).toStringAsFixed(2)}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: SAMsTheme.primary)),
+            const SizedBox(height: 24),
+            _detailRow('Transaction ID', p['transactionId'] ?? '–'),
+            _detailRow('Date', dateStr),
+            _detailRow('Time', timeStr),
+            _detailRow('Payment Method', p['method'] == 'card' ? 'Card (Stripe)' : 'FPX Online Banking'),
+            _detailRow('Bank', bank),
+            _detailRow('Description', description),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  foregroundColor: Theme.of(context).colorScheme.onSurface,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: BorderSide(color: Theme.of(context).dividerColor),
+                ),
+                child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color)),
+          const SizedBox(width: 16),
+          Flexible(child: Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface), textAlign: TextAlign.end)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,7 +230,7 @@ class _StudentHistoryTabState extends State<StudentHistoryTab> {
                             final isSuccess = status == 'success';
                             final col = isSuccess ? SAMsTheme.success : (status == 'failed' ? SAMsTheme.error : SAMsTheme.accent);
                             return GestureDetector(
-                              onTap: status == 'pending' ? () => _continuePay(p) : null,
+                              onTap: status == 'pending' ? () => _continuePay(p) : () => _viewPaymentDetail(p),
                               child: Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: status == 'pending' ? SAMsTheme.accent.withOpacity(0.4) : Theme.of(context).dividerColor)),

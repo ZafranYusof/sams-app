@@ -13,7 +13,7 @@ const router = express.Router();
 // Create FPX payment bill
 router.post('/fpx/create', auth, async (req, res) => {
   try {
-    const { feeId, amount, description } = req.body;
+    const { feeId, amount, description, bank } = req.body;
     if (!feeId || !mongoose.Types.ObjectId.isValid(feeId)) {
       return res.status(400).json({ error: 'Invalid fee ID' });
     }
@@ -63,6 +63,7 @@ router.post('/fpx/create', auth, async (req, res) => {
         amount,
         method: 'fpx',
         transactionId: result[0].BillCode,
+        bank: bank || 'FPX',
         status: 'pending',
       });
       await payment.save();

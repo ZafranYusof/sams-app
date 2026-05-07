@@ -83,6 +83,7 @@ class _StudentPaymentTabState extends State<StudentPaymentTab> {
           'feeId': targetFee['id'],
           'amount': targetFee['amount'],
           'description': 'UMPSA Tuition Fee Payment',
+          'bank': _selBank,
         });
         
         final paymentUrl = result['paymentUrl'];
@@ -306,10 +307,14 @@ class _PaymentWebView extends StatefulWidget {
 class _PaymentWebViewState extends State<_PaymentWebView> {
   late final WebViewController _controller;
   bool _loading = true;
+  bool _done = false;
+  bool _timeoutShown = false;
+  static const _timeoutDuration = Duration(minutes: 5);
 
   @override
   void initState() {
     super.initState();
+    _startTimeoutTimer();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(NavigationDelegate(
@@ -319,6 +324,7 @@ class _PaymentWebViewState extends State<_PaymentWebView> {
           // Intercept callback/deep link
           if (request.url.contains('samsapp://') || request.url.contains('/payment/success') || request.url.contains('/payment/failed')) {
             final success = request.url.contains('success') || request.url.contains('status_id=1');
+            _done = true;
             Navigator.pop(context, success);
             return NavigationDecision.prevent;
           }
@@ -326,6 +332,42 @@ class _PaymentWebViewState extends State<_PaymentWebView> {
         },
       ))
       ..loadRequest(Uri.parse(widget.url));
+  }
+
+  void _startTimeoutTimer() {
+    Future.delayed(_timeoutDuration, () {
+      if (!mounted || _done || _timeoutShown) return;
+      _handleTimeout();
+    });
+  }
+
+  void _handleTimeout() {
+    if (_done || _timeoutShown) return;
+    _timeoutShown = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Row(children: [
+          Text('⏱️ ', style: TextStyle(fontSize: 22)),
+          Text('Payment Timeout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        ]),
+        content: const Text(
+          'Your transaction is taking longer than expected. It may still be processing.\n\nPlease check your payment history for the latest status.',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () { Navigator.pop(context); _timeoutShown = false; },
+            child: const Text('Keep Waiting'),
+          ),
+          TextButton(
+            onPressed: () { Navigator.pop(context); Navigator.pop(context, false); },
+            child: const Text('Check History', style: TextStyle(color: SAMsTheme.primary, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
