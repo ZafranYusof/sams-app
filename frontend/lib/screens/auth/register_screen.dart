@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../home/main_shell.dart';
@@ -44,6 +45,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final t = Theme.of(context);
+    final isDark = t.brightness == Brightness.dark;
+    final accent = isDark ? SAMsTheme.brass : const Color(0xFFB28A3E);
+    final muted = t.textTheme.bodyMedium?.color ?? SAMsTheme.textSecondary;
 
     // Navigate to home when authenticated after registration
     ref.listen<AuthState>(authProvider, (prev, next) {
@@ -56,47 +61,92 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Create account'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Join SAMs', style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 8),
-              Text('Fill in your details to get started', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 32),
-              TextField(controller: _studentIdController, decoration: const InputDecoration(hintText: 'Student ID', prefixIcon: Icon(Icons.badge_outlined))),
+              Row(
+                children: [
+                  Container(width: 26, height: 1, color: accent),
+                  const SizedBox(width: 10),
+                  Text('NEW STUDENT',
+                    style: GoogleFonts.inter(color: muted, fontSize: 11, letterSpacing: 2.4, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              Text('Join SAMs', style: t.textTheme.displayMedium),
+              const SizedBox(height: 8),
+              Text(
+                'A few details and you\'re in.',
+                style: t.textTheme.bodyMedium?.copyWith(fontSize: 15),
+              ),
+              const SizedBox(height: 36),
+              _label('STUDENT ID', muted),
+              const SizedBox(height: 8),
+              TextField(controller: _studentIdController, decoration: InputDecoration(hintText: 'CB23000', prefixIcon: Icon(Icons.badge_outlined, size: 18, color: muted))),
               const SizedBox(height: 16),
-              TextField(controller: _nameController, decoration: const InputDecoration(hintText: 'Full Name', prefixIcon: Icon(Icons.person_outlined))),
+              _label('FULL NAME', muted),
+              const SizedBox(height: 8),
+              TextField(controller: _nameController, decoration: InputDecoration(hintText: 'Your name', prefixIcon: Icon(Icons.person_outline, size: 18, color: muted))),
               const SizedBox(height: 16),
-              TextField(controller: _emailController, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(hintText: 'Email', prefixIcon: Icon(Icons.email_outlined))),
+              _label('EMAIL', muted),
+              const SizedBox(height: 8),
+              TextField(controller: _emailController, keyboardType: TextInputType.emailAddress, decoration: InputDecoration(hintText: 'name@umpsa.edu.my', prefixIcon: Icon(Icons.alternate_email_rounded, size: 18, color: muted))),
               const SizedBox(height: 16),
-              TextField(controller: _passwordController, obscureText: true, decoration: const InputDecoration(hintText: 'Password', prefixIcon: Icon(Icons.lock_outlined))),
+              _label('PASSWORD', muted),
+              const SizedBox(height: 8),
+              TextField(controller: _passwordController, obscureText: true, decoration: InputDecoration(hintText: '••••••••', prefixIcon: Icon(Icons.lock_outline_rounded, size: 18, color: muted))),
               const SizedBox(height: 16),
-              TextField(controller: _facultyController, decoration: const InputDecoration(hintText: 'Faculty', prefixIcon: Icon(Icons.business_outlined))),
+              _label('FACULTY', muted),
+              const SizedBox(height: 8),
+              TextField(controller: _facultyController, decoration: InputDecoration(hintText: 'Faculty of Computing', prefixIcon: Icon(Icons.account_balance_outlined, size: 18, color: muted))),
               const SizedBox(height: 16),
-              TextField(controller: _programController, decoration: const InputDecoration(hintText: 'Program', prefixIcon: Icon(Icons.menu_book_outlined))),
+              _label('PROGRAM', muted),
+              const SizedBox(height: 8),
+              TextField(controller: _programController, decoration: InputDecoration(hintText: 'Software Engineering', prefixIcon: Icon(Icons.menu_book_outlined, size: 18, color: muted))),
               if (authState.error != null) ...[
-                const SizedBox(height: 12),
-                Text(authState.error!, style: const TextStyle(color: SAMsTheme.error, fontSize: 13)),
+                const SizedBox(height: 14),
+                Row(children: [
+                  const Icon(Icons.error_outline, color: SAMsTheme.error, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(authState.error!, style: const TextStyle(color: SAMsTheme.error, fontSize: 13))),
+                ]),
               ],
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 54,
                 child: ElevatedButton(
                   onPressed: authState.isLoading ? null : _register,
                   child: authState.isLoading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Create Account'),
+                      ? SizedBox(
+                          width: 18, height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 1.6, color: isDark ? SAMsTheme.ink : SAMsTheme.paper),
+                        )
+                      : const Text('Create account', style: TextStyle(fontSize: 14.5, letterSpacing: 0.4)),
                 ),
               ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _label(String text, Color color) => Text(
+    text,
+    style: GoogleFonts.inter(color: color, fontSize: 10.5, letterSpacing: 1.6, fontWeight: FontWeight.w600),
+  );
 }
