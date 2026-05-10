@@ -132,7 +132,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   child: authState.isLoading
                       ? SizedBox(
                           width: 18, height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 1.6, color: isDark ? SAMsTheme.ink : SAMsTheme.paper),
+                          child: CircularProgressIndicator(strokeWidth: 1.6, color: t.colorScheme.primary),
                         )
                       : const Text('Create account', style: TextStyle(fontSize: 14.5, letterSpacing: 0.4)),
                 ),
