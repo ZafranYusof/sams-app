@@ -128,7 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: authState.isLoading
                       ? SizedBox(
                           width: 18, height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 1.6, color: isDark ? SAMsTheme.ink : SAMsTheme.paper),
+                          child: CircularProgressIndicator(strokeWidth: 1.6, color: t.colorScheme.primary),
                         )
                       : const Text('Sign In', style: TextStyle(fontSize: 14.5, letterSpacing: 0.4)),
                 ),
