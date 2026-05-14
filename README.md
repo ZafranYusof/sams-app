@@ -18,6 +18,35 @@ A full-stack student academic management system with premium dark blue UI.
 
 ## Setup
 
+## Project Structure
+
+```
+sams-app/
+├── frontend/               Flutter mobile app
+│   └── lib/
+│       ├── screens/        UI screens per module
+│       ├── models/         Data models
+│       ├── providers/      Riverpod state providers
+│       ├── services/       API service layer
+│       ├── widgets/        Reusable UI widgets
+│       ├── routes/         Navigation and routing
+│       └── config/         App configuration
+├── backend/                Node.js + Express API
+│   ├── controllers/        Request handlers
+│   ├── models/             Mongoose schemas
+│   ├── routes/             API endpoints
+│   ├── services/           Business logic
+│   ├── middleware/         Auth, validation
+│   ├── config/             DB and app config
+│   └── utils/              Helper functions
+└── backend-php/            Legacy PHP backend
+    ├── modules/            PHP route modules
+    ├── middleware/         PHP middleware
+    └── config/             PHP configuration
+```
+
+## Setup
+
 ### Backend
 
 ```bash
