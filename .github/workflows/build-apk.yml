@@ -25,13 +25,15 @@ jobs:
         channel: 'stable'
     
     - name: Get dependencies
+      working-directory: ./frontend
       run: flutter pub get
     
     - name: Build APK
+      working-directory: ./frontend
       run: flutter build apk --release
     
     - name: Upload APK
       uses: actions/upload-artifact@v3
       with:
         name: sams-app-release
-        path: build/app/outputs/flutter-apk/app-release.apk
+        path: frontend/build/app/outputs/flutter-apk/app-release.apk
