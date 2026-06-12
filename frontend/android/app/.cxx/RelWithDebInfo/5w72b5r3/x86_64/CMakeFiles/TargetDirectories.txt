@@ -1,0 +1,2 @@
+C:/Users/zafra/OneDrive/OneDrive - ump.edu.my/Desktop/sams-app/frontend/android/app/.cxx/RelWithDebInfo/5w72b5r3/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/zafra/OneDrive/OneDrive - ump.edu.my/Desktop/sams-app/frontend/android/app/.cxx/RelWithDebInfo/5w72b5r3/x86_64/CMakeFiles/rebuild_cache.dir
