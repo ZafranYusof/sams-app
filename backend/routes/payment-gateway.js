@@ -162,7 +162,9 @@ function mapChannelToBank(channel) {
   if (c.includes('muamalat')) return 'Bank Muamalat';
   if (c.includes('agro')) return 'Agrobank';
   if (c.includes('affin')) return 'Affin Bank';
-  return channel; // fallback to raw
+  // Filter out generic FPX channel names (sandbox/dev returns "FPX B2C")
+  if (c.includes('fpx') || c.includes('b2c') || c.includes('b2b')) return 'Online Banking';
+  return channel || 'Online Banking'; // fallback
 }
 
 // FPX webhook (server-to-server callback)
