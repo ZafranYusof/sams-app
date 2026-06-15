@@ -4,6 +4,7 @@ const Fee = require('../models/Fee');
 const Payment = require('../models/Payment');
 const { auth, adminOnly } = require('../middleware/auth');
 const crypto = require('crypto');
+const fcm = require('../services/fcmService');
 
 const router = express.Router();
 
@@ -163,6 +164,14 @@ router.post('/', auth, adminOnly, async (req, res) => {
       dueDate: dueDate ? new Date(dueDate) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
     });
     await fee.save();
+
+    // Push notification to student (fire-and-forget)
+    fcm.sendToUser(student.toString(), {
+      title: 'New Fee Assigned',
+      body: `RM${totalAmount.toFixed(2)} for semester ${semester || 1} ${academicYear || ''} — due ${fee.dueDate.toLocaleDateString('en-GB')}`,
+      data: { type: 'new_fee', feeId: fee._id.toString() },
+    }).catch(e => console.error('[push] new_fee:', e.message));
+
     res.status(201).json(fee);
   } catch (err) {
     console.error('Create fee error:', err.message);

@@ -1,0 +1,71 @@
+const express = require('express');
+const User = require('../models/User');
+const { auth } = require('../middleware/auth');
+const fcm = require('../services/fcmService');
+
+const router = express.Router();
+
+/**
+ * Register or update FCM device token for authenticated user.
+ * POST /api/users/fcm-token
+ * body: { fcmToken }
+ */
+router.post('/fcm-token', auth, async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+    if (!fcmToken || typeof fcmToken !== 'string') {
+      return res.status(400).json({ error: 'fcmToken required' });
+    }
+
+    // $addToSet prevents duplicates
+    await User.findByIdAndUpdate(req.user._id, {
+      $addToSet: { fcmTokens: fcmToken },
+    });
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error('[users/fcm-token]', e);
+    res.status(500).json({ error: 'Failed to register token' });
+  }
+});
+
+/**
+ * Remove FCM token (called on logout).
+ * DELETE /api/users/fcm-token
+ * body: { fcmToken }
+ */
+router.delete('/fcm-token', auth, async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+    if (!fcmToken) {
+      return res.status(400).json({ error: 'fcmToken required' });
+    }
+    await User.findByIdAndUpdate(req.user._id, {
+      $pull: { fcmTokens: fcmToken },
+    });
+    res.json({ success: true });
+  } catch (e) {
+    console.error('[users/fcm-token DELETE]', e);
+    res.status(500).json({ error: 'Failed to remove token' });
+  }
+});
+
+/**
+ * Send a test notification to self (debug/demo).
+ * POST /api/users/test-notification
+ */
+router.post('/test-notification', auth, async (req, res) => {
+  try {
+    const result = await fcm.sendToUser(req.user._id.toString(), {
+      title: 'SAMS Test Notification',
+      body: 'Push notifications working. Backend → FCM → your device.',
+      data: { type: 'test', timestamp: Date.now().toString() },
+    });
+    res.json(result);
+  } catch (e) {
+    console.error('[users/test-notification]', e);
+    res.status(500).json({ error: 'Send failed' });
+  }
+});
+
+module.exports = router;

@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
   semester: { type: Number, default: 1 },
   phone: { type: String },
   avatar: { type: String },
+  fcmTokens: { type: [String], default: [] },
   createdAt: { type: Date, default: Date.now }
 });
 

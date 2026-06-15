@@ -9,6 +9,8 @@ const feesRoutes = require('./routes/fees');
 const paymentsRoutes = require('./routes/payments');
 const notificationsRoutes = require('./routes/notifications');
 const paymentGatewayRoutes = require('./routes/payment-gateway');
+const usersRoutes = require('./routes/users');
+const fcm = require('./services/fcmService');
 
 const Payment = require('./models/Payment');
 const Fee = require('./models/Fee');
@@ -30,6 +32,10 @@ app.use('/api/fees', feesRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/payment', paymentGatewayRoutes);
+app.use('/api/users', usersRoutes);
+
+// Initialize Firebase Admin SDK for push notifications
+fcm.init();
 
 // Health check
 app.get('/api/health', (req, res) => {

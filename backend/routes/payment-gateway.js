@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const Fee = require('../models/Fee');
 const Payment = require('../models/Payment');
 const { auth } = require('../middleware/auth');
+const fcm = require('../services/fcmService');
 
 const router = express.Router();
 
@@ -125,6 +126,15 @@ router.get('/fpx/callback', async (req, res) => {
               $set: { status: (fee.paidAmount + actualAmount) >= fee.totalAmount ? 'paid' : 'partial' }
             }
           );
+
+          // Push notification to student (fire-and-forget)
+          if (fee.student) {
+            fcm.sendToUser(fee.student.toString(), {
+              title: 'Payment Successful',
+              body: `RM${actualAmount.toFixed(2)} received for ${fee.description || 'fee payment'}. Receipt: ${payment.receipt}`,
+              data: { type: 'payment_success', feeId: fee._id.toString(), receipt: payment.receipt },
+            }).catch(e => console.error('[push] payment_success:', e.message));
+          }
         }
       } else if (status_id === '3') {
         payment.status = 'failed';
@@ -206,6 +216,15 @@ router.post('/fpx/webhook', async (req, res) => {
               $set: { status: (fee.paidAmount + actualAmount) >= fee.totalAmount ? 'paid' : 'partial' }
             }
           );
+
+          // Push notification to student (fire-and-forget)
+          if (fee.student) {
+            fcm.sendToUser(fee.student.toString(), {
+              title: 'Payment Successful',
+              body: `RM${actualAmount.toFixed(2)} received for ${fee.description || 'fee payment'}. Receipt: ${payment.receipt}`,
+              data: { type: 'payment_success', feeId: fee._id.toString(), receipt: payment.receipt },
+            }).catch(e => console.error('[push] payment_success:', e.message));
+          }
         }
       } else if (status_id === '3') {
         payment.status = 'failed';
