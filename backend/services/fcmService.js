@@ -36,6 +36,12 @@ async function sendToUser(userId, payload) {
     return { success: false, reason: 'not_initialized' };
   }
 
+  // Check if messaging() is available
+  if (typeof admin.messaging !== 'function') {
+    console.error('[FCM] admin.messaging is not a function - Firebase Admin SDK issue');
+    return { success: false, reason: 'messaging_unavailable' };
+  }
+
   try {
     const user = await User.findById(userId).select('fcmTokens');
     if (!user || !user.fcmTokens || user.fcmTokens.length === 0) {
