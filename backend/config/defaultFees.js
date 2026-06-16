@@ -69,6 +69,9 @@ function computeStudentStatus(fee, now = new Date(), financingType = 'unfinanced
   const asramaPaid = asramaItem ? (asramaItem.paidAmount || 0) >= asramaItem.amount : true;
   const fullyPaid = (fee.paidAmount || 0) >= fee.totalAmount;
 
+  // If fee is fully paid at fee-level, student is active regardless of item-level sync
+  if (fullyPaid) return 'active';
+
   // Sponsored students: only 3rd restriction applies (week 18) if sponsor debt remains
   if (financingType === 'sponsored') {
     if (now >= PAYMENT_SCHEDULE.thirdRestriction && !fullyPaid) return 'restricted_3';
