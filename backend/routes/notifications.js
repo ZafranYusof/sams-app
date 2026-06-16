@@ -97,9 +97,16 @@ router.post('/send-reminder', auth, adminOnly, async (req, res) => {
     }));
     const created = await Notification.insertMany(notifications);
 
-    // Debug: log what studentIds treasury sends
+    // Debug: log what studentIds treasury sends + resolve to User IDs
     console.log('[send-reminder] Received studentIds:', studentIds);
     console.log('[send-reminder] Count:', studentIds.length);
+    
+    // Resolve studentIds to User IDs for debugging
+    const resolved = await Promise.all(studentIds.map(async (sid) => {
+      const uid = await resolveUserId(sid);
+      return { studentId: sid, userId: uid };
+    }));
+    console.log('[send-reminder] Resolved:', resolved);
     
     // Fire-and-forget FCM push to every targeted student's devices
     pushToStudents(studentIds, {
@@ -108,7 +115,11 @@ router.post('/send-reminder', auth, adminOnly, async (req, res) => {
       data: { type: 'reminder' },
     });
 
-    res.status(201).json({ success: true, count: created.length });
+    res.status(201).json({ 
+      success: true, 
+      count: created.length,
+      debug: { sent: studentIds, resolved: resolved.map(r => ({ ...r, found: !!r.userId })) }
+    });
   } catch (err) {
     console.error('Send reminder error:', err.message);
     res.status(500).json({ error: 'Failed to send reminders' });
