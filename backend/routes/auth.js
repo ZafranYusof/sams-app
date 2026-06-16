@@ -89,12 +89,14 @@ router.post('/login', async (req, res) => {
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user._id, role: user.role }, jwtSecret, { expiresIn: jwtExpire });
+    const studentStatus = await getStudentStatus(user);
     res.json({
       token,
       user: {
         id: user._id, name: user.name, email: user.email, role: user.role,
         studentId: user.studentId, student_id: user.studentId,
         financingType: user.financingType,
+        studentStatus,
       }
     });
   } catch (err) {

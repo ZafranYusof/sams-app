@@ -120,12 +120,24 @@ router.post('/pay', auth, async (req, res) => {
     });
     await payment.save();
 
-    // Use findOneAndUpdate with $inc for atomicity
+    // Allocate payment to items by priority: tuition → facility → others
+    let remaining_alloc = actualAmount;
+    const items = fee.items.map(item => {
+      const unpaid = (item.amount || 0) - (item.paidAmount || 0);
+      if (unpaid <= 0 || remaining_alloc <= 0) return item;
+      const alloc = Math.min(unpaid, remaining_alloc);
+      remaining_alloc -= alloc;
+      return { ...item.toObject(), paidAmount: (item.paidAmount || 0) + alloc, paidAt: alloc > 0 ? new Date() : item.paidAt };
+    });
+
     const updatedFee = await Fee.findOneAndUpdate(
       { _id: feeId },
       { 
         $inc: { paidAmount: actualAmount },
-        $set: { status: (fee.paidAmount + actualAmount) >= fee.totalAmount ? 'paid' : 'partial' }
+        $set: {
+          items,
+          status: (fee.paidAmount + actualAmount) >= fee.totalAmount ? 'paid' : 'partial'
+        }
       },
       { new: true }
     );
