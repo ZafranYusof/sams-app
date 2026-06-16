@@ -446,49 +446,19 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> with TickerProv
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            SAMsTheme.success.withValues(alpha: 0.1),
-                            SAMsTheme.success.withValues(alpha: 0.03),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.5, 1.0],
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: SAMsTheme.success.withValues(alpha: 0.06),
-                            blurRadius: 12,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
+                        color: t.cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border(left: BorderSide(color: SAMsTheme.success, width: 3)),
                       ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: t.cardColor,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: SAMsTheme.success.withValues(alpha: 0.15), width: 1),
-                        ),
-                        padding: const EdgeInsets.all(20),
-                        child: Row(children: [
-                          Container(
-                            width: 40, height: 40,
-                            decoration: BoxDecoration(
-                              color: SAMsTheme.success.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Icon(Icons.check_circle_rounded, color: SAMsTheme.success, size: 22),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(lp.t('all_settled', loc), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: t.colorScheme.onSurface)),
-                            const SizedBox(height: 2),
-                            Text(lp.t('no_outstanding', loc), style: GoogleFonts.inter(fontSize: 12, color: t.textTheme.bodySmall?.color)),
-                          ])),
-                        ]),
-                      ),
+                      child: Row(children: [
+                        Icon(Icons.check_circle_rounded, color: SAMsTheme.success, size: 20),
+                        const SizedBox(width: 14),
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(lp.t('all_settled', loc), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: t.colorScheme.onSurface)),
+                          const SizedBox(height: 2),
+                          Text(lp.t('no_outstanding', loc), style: GoogleFonts.inter(fontSize: 12, color: t.textTheme.bodySmall?.color)),
+                        ])),
+                      ]),
                     ),
                   ],
                 );
@@ -537,103 +507,47 @@ class _StudentHomeTabState extends ConsumerState<StudentHomeTab> with TickerProv
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14),
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  (isPaidFee ? SAMsTheme.success : SAMsTheme.accent).withValues(alpha: 0.18),
-                                  (isPaidFee ? SAMsTheme.success : SAMsTheme.accent).withValues(alpha: 0.04),
-                                  Colors.transparent,
-                                ],
-                                stops: const [0.0, 0.4, 1.0],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: (isPaidFee ? SAMsTheme.success : SAMsTheme.accent).withValues(alpha: 0.08),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
+                              color: t.cardColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border(left: BorderSide(color: isPaidFee ? SAMsTheme.success : SAMsTheme.accent, width: 3)),
                             ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: t.cardColor,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: (isPaidFee ? SAMsTheme.success : SAMsTheme.accent).withValues(alpha: 0.2),
-                                  width: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                                  child: Row(children: [
+                                    Expanded(child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(semLabel, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: t.colorScheme.onSurface)),
+                                        const SizedBox(height: 2),
+                                        Text(isPaidFee ? lp.t('fully_paid', loc) : '${lp.t('tap_to_pay', loc)} RM ${balanceAmt.toStringAsFixed(2)}',
+                                          style: GoogleFonts.inter(fontSize: 11, color: isPaidFee ? SAMsTheme.success : t.textTheme.bodySmall?.color)),
+                                      ],
+                                    )),
+                                    Text('RM ${totalAmt.toStringAsFixed(0)}',
+                                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700,
+                                        color: isPaidFee ? SAMsTheme.success : SAMsTheme.accent)),
+                                  ]),
                                 ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                                Container(height: 1, margin: const EdgeInsets.symmetric(horizontal: 16), color: t.dividerColor),
+                                ...items.asMap().entries.map((entry) {
+                                  final item = entry.value as Map;
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                     child: Row(children: [
-                                      Container(
-                                        width: 4, height: 32,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              isPaidFee ? SAMsTheme.success : SAMsTheme.accent,
-                                              (isPaidFee ? SAMsTheme.success : SAMsTheme.accent).withValues(alpha: 0.4),
-                                            ],
-                                          ),
-                                          borderRadius: BorderRadius.circular(2),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(semLabel, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: t.colorScheme.onSurface)),
-                                          const SizedBox(height: 2),
-                                          Text(isPaidFee ? lp.t('fully_paid', loc) : '${lp.t('tap_to_pay', loc)} RM ${balanceAmt.toStringAsFixed(2)}',
-                                            style: GoogleFonts.inter(fontSize: 11, color: isPaidFee ? SAMsTheme.success : t.textTheme.bodySmall?.color)),
-                                        ],
-                                      )),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              (isPaidFee ? SAMsTheme.success : SAMsTheme.accent).withValues(alpha: 0.15),
-                                              (isPaidFee ? SAMsTheme.success : SAMsTheme.accent).withValues(alpha: 0.06),
-                                            ],
-                                          ),
-                                          borderRadius: BorderRadius.circular(6),
-                                          border: Border.all(
-                                            color: (isPaidFee ? SAMsTheme.success : SAMsTheme.accent).withValues(alpha: 0.12),
-                                            width: 0.5,
-                                          ),
-                                        ),
-                                        child: Text('RM ${totalAmt.toStringAsFixed(0)}',
-                                          style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700,
-                                            color: isPaidFee ? SAMsTheme.success : SAMsTheme.accent)),
-                                      ),
+                                      Expanded(child: Text(item['description']?.toString() ?? '',
+                                        style: GoogleFonts.inter(fontSize: 12, color: t.textTheme.bodySmall?.color))),
+                                      Text('RM ${((item['amount'] ?? 0) as num).toStringAsFixed(2)}',
+                                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500,
+                                          color: isPaidFee ? SAMsTheme.success : t.colorScheme.onSurface,
+                                          decoration: isPaidFee ? TextDecoration.lineThrough : null)),
                                     ]),
-                                  ),
-                                  Container(height: 1, margin: const EdgeInsets.symmetric(horizontal: 16), color: t.dividerColor.withValues(alpha: 0.5)),
-                                  ...items.asMap().entries.map((entry) {
-                                    final item = entry.value as Map;
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                      child: Row(children: [
-                                        Expanded(child: Text(item['description']?.toString() ?? '',
-                                          style: GoogleFonts.inter(fontSize: 12, color: t.textTheme.bodySmall?.color))),
-                                        Text('RM ${((item['amount'] ?? 0) as num).toStringAsFixed(2)}',
-                                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500,
-                                            color: isPaidFee ? SAMsTheme.success : t.colorScheme.onSurface,
-                                            decoration: isPaidFee ? TextDecoration.lineThrough : null)),
-                                      ]),
-                                    );
-                                  }),
-                                  const SizedBox(height: 6),
-                                ],
-                              ),
+                                  );
+                                }),
+                                const SizedBox(height: 6),
+                              ],
                             ),
                           ),
                         ),
@@ -777,53 +691,27 @@ class _MetricTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: ShapeDecoration(
+        color: t.cardColor,
         shape: SmoothRectangleBorder(
-          borderRadius: SmoothBorderRadius(cornerRadius: 14, cornerSmoothing: 0.8),
+          borderRadius: SmoothBorderRadius(cornerRadius: 12, cornerSmoothing: 0.8),
         ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accent.withValues(alpha: 0.1),
-            accent.withValues(alpha: 0.03),
-            Colors.transparent,
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ),
-        shadows: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
-      child: Container(
-        decoration: ShapeDecoration(
-          color: t.cardColor,
-          shape: SmoothRectangleBorder(
-            borderRadius: SmoothBorderRadius(cornerRadius: 14, cornerSmoothing: 0.8),
-            side: BorderSide(color: accent.withValues(alpha: 0.15), width: 1),
-          ),
-        ),
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 32, height: 32,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: accent, size: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28, height: 28,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
             ),
-            const SizedBox(height: 10),
-            Text(value, style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: t.colorScheme.onSurface)),
-            const SizedBox(height: 2),
-            Text(label, style: GoogleFonts.inter(fontSize: 11, color: t.textTheme.bodySmall?.color ?? Colors.grey)),
-          ],
-        ),
+            child: Icon(icon, color: accent, size: 14),
+          ),
+          const SizedBox(height: 10),
+          Text(value, style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: t.colorScheme.onSurface)),
+          const SizedBox(height: 2),
+          Text(label, style: GoogleFonts.inter(fontSize: 11, color: t.textTheme.bodySmall?.color ?? Colors.grey)),
+        ],
       ),
     );
   }
