@@ -97,6 +97,10 @@ router.post('/send-reminder', auth, adminOnly, async (req, res) => {
     }));
     const created = await Notification.insertMany(notifications);
 
+    // Debug: log what studentIds treasury sends
+    console.log('[send-reminder] Received studentIds:', studentIds);
+    console.log('[send-reminder] Count:', studentIds.length);
+    
     // Fire-and-forget FCM push to every targeted student's devices
     pushToStudents(studentIds, {
       title: 'Payment Reminder',
