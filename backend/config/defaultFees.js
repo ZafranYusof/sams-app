@@ -15,13 +15,13 @@
 //   Week 18 (15 Jul 2026) — 3rd Restriction (financed students)
 
 const PAYMENT_SCHEDULE = {
-  tuitionAsramaDue: new Date('2026-04-05'),    // Week 4
-  firstRestriction: new Date('2026-04-06'),    // Week 5
-  fullPaymentDeadline: new Date('2026-04-26'), // Week 7
-  secondRestriction: new Date('2026-05-04'),   // Week 8
-  finalSettlement: new Date('2026-05-24'),     // Week 10
-  defermentDate: new Date('2026-05-25'),       // Week 11
-  thirdRestriction: new Date('2026-07-15'),    // Week 18
+  tuitionAsramaDue: new Date('2026-06-14'),    // Week 4
+  firstRestriction: new Date('2026-06-15'),    // Week 5
+  fullPaymentDeadline: new Date('2026-07-05'), // Week 7
+  secondRestriction: new Date('2026-07-13'),   // Week 8
+  finalSettlement: new Date('2026-08-02'),     // Week 10
+  defermentDate: new Date('2026-08-03'),       // Week 11
+  thirdRestriction: new Date('2026-09-23'),    // Week 18
 };
 
 const DEFAULT_FEE_ITEMS = [
