@@ -79,9 +79,9 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (err) {
-    // [Bug #9] Don't leak internal errors
-    console.error('Register error:', err.message);
-    res.status(500).json({ error: 'Registration failed. Please try again.' });
+    // [Bug #9] Log full error for debugging
+    console.error('Register error:', err.message, err.stack);
+    res.status(500).json({ error: 'Registration failed. Please try again.', debug: err.message });
   }
 });
 
@@ -116,8 +116,8 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Login error:', err.message);
-    res.status(500).json({ error: 'Login failed. Please try again.' });
+    console.error('Login error:', err.message, err.stack);
+    res.status(500).json({ error: 'Login failed. Please try again.', debug: err.message });
   }
 });
 
