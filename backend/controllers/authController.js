@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Fee = require('../models/Fee');
 const { jwtSecret, jwtExpire } = require('../config');
+const { buildDefaultFee } = require('../config/defaultFees');
 
 // Register
 exports.register = async (req, res) => {
@@ -13,6 +15,17 @@ exports.register = async (req, res) => {
 
     const user = new User({ studentId, name, email, password, faculty, program });
     await user.save();
+
+    // Auto-create default semester fee for new students (skip admins)
+    if (user.role === 'student' || !user.role) {
+      try {
+        const defaultFee = new Fee(buildDefaultFee(user._id));
+        await defaultFee.save();
+      } catch (feeErr) {
+        // Non-fatal — registration succeeds even if fee seeding fails
+        console.error('[register] failed to seed default fee:', feeErr.message);
+      }
+    }
 
     const token = jwt.sign({ id: user._id, role: user.role }, jwtSecret, { expiresIn: jwtExpire });
     res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
