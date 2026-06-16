@@ -1,8 +1,31 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const { auth, adminOnly } = require('../middleware/auth');
+const User = require('../models/User');
+const fcm = require('../services/fcmService');
 
 const router = express.Router();
+
+// Resolve a student-string-id (e.g. CB23109) OR a Mongo ObjectId to a user._id.
+// Returns null if no matching user or invalid.
+async function resolveUserId(rawId) {
+  if (!rawId) return null;
+  // Already an ObjectId? trust it
+  if (/^[a-f0-9]{24}$/i.test(rawId)) return rawId;
+  // Else look up by studentId
+  const u = await User.findOne({ studentId: rawId }).select('_id');
+  return u ? u._id.toString() : null;
+}
+
+// Fire-and-forget push to many studentIds (string IDs OR Mongo IDs). Never blocks the response.
+function pushToStudents(studentIds, payload) {
+  Promise.all(studentIds.map(async (sid) => {
+    const uid = await resolveUserId(sid);
+    if (!uid) return;
+    try { await fcm.sendToUser(uid, payload); }
+    catch (e) { console.error('[notif push]', sid, e.message); }
+  })).catch(e => console.error('[notif push batch]', e.message));
+}
 
 // Notification schema (inline, simple)
 const notificationSchema = new mongoose.Schema({
@@ -22,6 +45,21 @@ router.post('/', auth, adminOnly, async (req, res) => {
     const { notifications } = req.body;
     if (Array.isArray(notifications) && notifications.length > 0) {
       const created = await Notification.insertMany(notifications);
+      // Push to each student's devices
+      const grouped = {};
+      for (const n of notifications) {
+        if (!n.studentId) continue;
+        if (!grouped[n.studentId]) grouped[n.studentId] = [];
+        grouped[n.studentId].push(n);
+      }
+      Object.entries(grouped).forEach(([sid, list]) => {
+        const first = list[0];
+        pushToStudents([sid], {
+          title: first.title || 'Notification',
+          body: first.message || '',
+          data: { type: first.type || 'info' },
+        });
+      });
       return res.status(201).json({ success: true, count: created.length });
     }
     // Single notification
@@ -30,6 +68,11 @@ router.post('/', auth, adminOnly, async (req, res) => {
       return res.status(400).json({ error: 'studentId and title are required' });
     }
     const notif = await Notification.create({ studentId, title, message, type: type || 'reminder' });
+    pushToStudents([studentId], {
+      title,
+      body: message || '',
+      data: { type: type || 'reminder', notificationId: notif._id.toString() },
+    });
     res.status(201).json({ success: true, notification: notif });
   } catch (err) {
     console.error('Create notification error:', err.message);
@@ -44,14 +87,23 @@ router.post('/send-reminder', auth, adminOnly, async (req, res) => {
     if (!Array.isArray(studentIds) || studentIds.length === 0) {
       return res.status(400).json({ error: 'studentIds array required' });
     }
+    const reminderText = message || 'You have outstanding tuition fees. Please make payment before the deadline to avoid penalties.';
     const notifications = studentIds.map(sid => ({
       studentId: sid,
       title: 'Payment Reminder',
-      message: message || 'You have outstanding tuition fees. Please make payment before the deadline to avoid penalties.',
+      message: reminderText,
       type: 'reminder',
       read: false,
     }));
     const created = await Notification.insertMany(notifications);
+
+    // Fire-and-forget FCM push to every targeted student's devices
+    pushToStudents(studentIds, {
+      title: 'Payment Reminder',
+      body: reminderText,
+      data: { type: 'reminder' },
+    });
+
     res.status(201).json({ success: true, count: created.length });
   } catch (err) {
     console.error('Send reminder error:', err.message);
