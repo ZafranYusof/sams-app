@@ -165,6 +165,13 @@ router.post('/', auth, adminOnly, async (req, res) => {
     if (!items || !items.length) return res.status(400).json({ error: 'Fee items required' });
 
     const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+    
+    // Validate dueDate (must be future date)
+    let parsedDueDate = dueDate ? new Date(dueDate) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+    if (dueDate && parsedDueDate < new Date()) {
+      return res.status(400).json({ error: 'Due date must be in the future' });
+    }
+    
     const fee = new Fee({
       student,
       items,
@@ -173,7 +180,7 @@ router.post('/', auth, adminOnly, async (req, res) => {
       totalAmount,
       paidAmount: 0,
       status: 'unpaid',
-      dueDate: dueDate ? new Date(dueDate) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+      dueDate: parsedDueDate,
     });
     await fee.save();
 

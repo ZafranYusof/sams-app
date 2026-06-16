@@ -33,6 +33,11 @@ router.post('/register', async (req, res) => {
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
+    // StudentId format validation (CB##### pattern)
+    const studentIdRegex = /^CB\d{5}$/;
+    if (!studentIdRegex.test(studentId)) {
+      return res.status(400).json({ error: 'Invalid studentId format. Expected CB##### (e.g., CB23109)' });
+    }
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
