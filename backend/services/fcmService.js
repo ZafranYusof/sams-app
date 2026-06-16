@@ -11,11 +11,11 @@ function init() {
     if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
       // Production: JSON string in env var (Render)
       const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
-      credential = admin.cert(sa);
+      credential = admin.credential.cert(sa);
     } else {
       // Local: load from file
       const sa = require('../firebase-service-account.json');
-      credential = admin.cert(sa);
+      credential = admin.credential.cert(sa);
     }
     
     // Check if already initialized (e.g. by another module)
