@@ -1,10 +1,10 @@
 const express = require('express');
-const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Fee = require('../models/Fee');
 const { jwtSecret, jwtExpire } = require('../config');
 const { auth } = require('../middleware/auth');
+const { computeStudentStatus, buildDefaultFee } = require('../config/defaultFees');
 // Rate limiting removed for development/testing
 
 // Helper: derive student academic status from latest fee record + UMP payment schedule.
@@ -79,9 +79,8 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (err) {
-    // [Bug #9] Log full error for debugging
-    console.error('Register error:', err.message, err.stack);
-    res.status(500).json({ error: 'Registration failed. Please try again.', debug: err.message });
+    console.error('Register error:', err.message);
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
   }
 });
 
@@ -116,8 +115,8 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Login error:', err.message, err.stack);
-    res.status(500).json({ error: 'Login failed. Please try again.', debug: err.message });
+    console.error('Login error:', err.message);
+    res.status(500).json({ error: 'Login failed. Please try again.' });
   }
 });
 
