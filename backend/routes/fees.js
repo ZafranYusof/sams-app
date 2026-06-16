@@ -93,7 +93,18 @@ router.post('/pay', auth, async (req, res) => {
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
-    
+    // BUG 5 FIX: Validate bank parameter
+    const VALID_BANKS = [
+      'Maybank', 'CIMB', 'Public Bank', 'RHB', 'Hong Leong',
+      'AmBank', 'Bank Islam', 'Bank Rakyat', 'BSN', 'Affin Bank',
+      'Alliance Bank', 'HSBC', 'Standard Chartered', 'OCBC', 'UOB',
+      'Agrobank', 'Bank Muamalat', 'MBSB Bank', 'KFH',
+    ];
+    const trimmedBank = bank ? bank.trim() : '';
+    if (trimmedBank && (trimmedBank.length > 50 || !VALID_BANKS.some(b => b.toLowerCase() === trimmedBank.toLowerCase()))) {
+      return res.status(400).json({ error: 'Invalid bank name' });
+    }
+
     const fee = await Fee.findById(feeId);
     if (!fee) return res.status(404).json({ error: 'Fee not found' });
     // Authorization: fee owner or admin can pay
@@ -193,7 +204,7 @@ router.post('/pay', auth, async (req, res) => {
       fee: feeId,
       amount: actualAmount,
       method: 'fpx',
-      bank,
+      bank: trimmedBank || bank,
       transactionId,
       status: 'success',
       receipt: `RCP-${Date.now()}`
@@ -265,7 +276,7 @@ router.get('/', auth, adminOnly, async (req, res) => {
     
     const fees = await Fee.find().populate('student', 'name studentId').skip(skip).limit(limit).sort({ createdAt: -1 });
     const total = await Fee.countDocuments();
-    res.json(fees.length <= 100 ? fees : { fees, total, page, pages: Math.ceil(total / limit) });
+    res.json({ fees, total, page, pages: Math.ceil(total / limit) });
   } catch (err) {
     console.error('Get all fees error:', err.message);
     res.status(500).json({ error: 'Failed to fetch fees' });

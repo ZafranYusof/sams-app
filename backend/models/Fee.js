@@ -13,7 +13,7 @@ const feeSchema = new mongoose.Schema({
   }],
   totalAmount: { type: Number, required: true },
   paidAmount: { type: Number, default: 0 },
-  status: { type: String, enum: ['unpaid', 'partial', 'paid', 'overdue'], default: 'unpaid' },
+  status: { type: String, enum: ['unpaid', 'partial', 'paid', 'overdue', 'partial_overdue'], default: 'unpaid' },
   dueDate: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
@@ -40,9 +40,9 @@ feeSchema.pre('save', function (next) {
     this.status = 'partial';
   }
 
-  // Mark overdue if past due date
+  // BUG 3 FIX: Mark overdue if past due date, preserving partial distinction
   if (this.dueDate && new Date() > this.dueDate && this.status !== 'paid') {
-    this.status = 'overdue';
+    this.status = this.status === 'partial' ? 'partial_overdue' : 'overdue';
   }
 
   next();

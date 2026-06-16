@@ -27,17 +27,8 @@ function pushToStudents(studentIds, payload) {
   })).catch(e => console.error('[notif push batch]', e.message));
 }
 
-// Notification schema (inline, simple)
-const notificationSchema = new mongoose.Schema({
-  studentId: { type: String, required: true },
-  title: { type: String, required: true },
-  message: { type: String },
-  type: { type: String, enum: ['info', 'warning', 'payment', 'reminder'], default: 'info' },
-  read: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Notification = mongoose.models.Notification || mongoose.model('Notification', notificationSchema);
+// BUG 2 FIX: Use separate Notification model
+const Notification = require('../models/Notification');
 
 // POST /api/notifications - create notification(s) [admin only]
 router.post('/', auth, adminOnly, async (req, res) => {
@@ -128,7 +119,8 @@ router.put('/read-all/:studentId', auth, async (req, res) => {
     // Authorization: only own notifications or admin
     const User = require('../models/User');
     const user = await User.findById(req.user.id);
-    if (user.studentId !== req.params.studentId && req.user.role !== 'admin') {
+    // BUG 7 FIX: Check role first — non-student roles may have null studentId
+    if (req.user.role !== 'admin' && (req.user.role !== 'student' || user.studentId !== req.params.studentId)) {
       return res.status(403).json({ error: 'Access denied' });
     }
     await Notification.updateMany({ studentId: req.params.studentId }, { read: true });
@@ -150,7 +142,8 @@ router.put('/:id/read', auth, async (req, res) => {
     // Authorization: only own notification or admin
     const User = require('../models/User');
     const user = await User.findById(req.user.id);
-    if (notif.studentId !== user.studentId && req.user.role !== 'admin') {
+    // BUG 7 FIX: Check role first — non-student roles may have null studentId
+    if (req.user.role !== 'admin' && (req.user.role !== 'student' || notif.studentId !== user.studentId)) {
       return res.status(403).json({ error: 'Access denied' });
     }
     await Notification.findByIdAndUpdate(req.params.id, { read: true });
@@ -167,7 +160,8 @@ router.get('/:studentId', auth, async (req, res) => {
     // Authorization: only own notifications or admin
     const User = require('../models/User');
     const user = await User.findById(req.user.id);
-    if (user.studentId !== req.params.studentId && req.user.role !== 'admin') {
+    // BUG 7 FIX: Check role first — non-student roles may have null studentId
+    if (req.user.role !== 'admin' && (req.user.role !== 'student' || user.studentId !== req.params.studentId)) {
       return res.status(403).json({ error: 'Access denied' });
     }
     const notifications = await Notification.find({ studentId: req.params.studentId }).sort({ createdAt: -1 });

@@ -32,10 +32,11 @@ const DEFAULT_FEE_ITEMS = [
 const DEFAULT_FEE_TOTAL = DEFAULT_FEE_ITEMS.reduce((sum, item) => sum + item.amount, 0);
 
 // Helper to build a default fee object for a student
+// BUG 4 FIX: Deep copy to prevent mutation of shared DEFAULT_FEE_ITEMS
 function buildDefaultFee(studentObjectId, options = {}) {
   return {
     student: studentObjectId,
-    items: DEFAULT_FEE_ITEMS.map(item => ({ ...item })),
+    items: JSON.parse(JSON.stringify(DEFAULT_FEE_ITEMS)),
     semester: options.semester || 2,
     academicYear: options.academicYear || '2025/2026',
     totalAmount: DEFAULT_FEE_TOTAL,

@@ -91,9 +91,17 @@ router.post('/register', registerLimiter, async (req, res) => {
 // Login
 router.post('/login', loginLimiter, async (req, res) => {
   try {
+    // BUG 6 FIX: Detect identifier format to avoid ambiguous $or query
     const identifier = req.body.email || req.body.student_id || req.body.studentId;
     const { password } = req.body;
-    const user = await User.findOne({ $or: [{ email: identifier }, { studentId: identifier }] });
+    let user;
+    if (identifier && identifier.includes('@')) {
+      user = await User.findOne({ email: identifier });
+    } else if (identifier && /^CB/i.test(identifier)) {
+      user = await User.findOne({ studentId: identifier });
+    } else {
+      user = await User.findOne({ $or: [{ email: identifier }, { studentId: identifier }] });
+    }
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
     const isMatch = await user.comparePassword(password);
