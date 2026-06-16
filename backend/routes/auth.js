@@ -4,17 +4,15 @@ const User = require('../models/User');
 const Fee = require('../models/Fee');
 const { jwtSecret, jwtExpire } = require('../config');
 const { auth } = require('../middleware/auth');
+const { computeStudentStatus } = require('../config/defaultFees');
 
-// Helper: derive student academic status from latest fee record.
-// "active" if Yuran Pengajian (tuition) is fully paid for current semester,
-// "inactive" otherwise. Admins default to "active".
-async function getStudentStatus(userId, role) {
+// Helper: derive student academic status from latest fee record + UMP payment schedule.
+// Returns one of: 'active', 'warning', 'restricted_1', 'restricted_2', 'deferred', 'restricted_3'.
+// Admins always 'active'.
+async function getStudentStatus(userId, role, financingType = 'unfinanced') {
   if (role && role !== 'student') return 'active';
   const fee = await Fee.findOne({ student: userId }).sort({ createdAt: -1 });
-  if (!fee) return 'inactive';
-  const tuition = fee.items.find(i => i.category === 'tuition');
-  if (!tuition) return 'inactive';
-  return (tuition.paidAmount || 0) >= tuition.amount ? 'active' : 'inactive';
+  return computeStudentStatus(fee, new Date(), financingType);
 }
 
 const router = express.Router();
