@@ -102,12 +102,92 @@ router.post('/pay', auth, async (req, res) => {
     }
     if (fee.status === 'paid') return res.status(400).json({ error: 'Already fully paid' });
 
-    // Cap amount at remaining balance to prevent overpayment
-    const remaining = fee.totalAmount - fee.paidAmount;
-    const actualAmount = Math.min(amount, remaining);
-
+    // [Bug #1-3 FIX] Atomic payment via MongoDB aggregation pipeline
     const transactionId = 'FPX' + crypto.randomBytes(8).toString('hex').toUpperCase();
-    
+
+    // BUG 1 FIX: Atomic condition check + pipeline prevents concurrent overpayment.
+    // BUG 2 FIX: Item allocation computed atomically via $reduce inside the pipeline.
+    // BUG 3 FIX: Status derived from new paidAmount (pre('save') doesn't fire on findOneAndUpdate).
+    const updatedFee = await Fee.findOneAndUpdate(
+      { _id: feeId, paidAmount: { $lt: fee.totalAmount }, status: { $ne: 'paid' } },
+      [
+        // Step 1: compute capped amount atomically based on current DB state
+        { $set: { _payAmt: { $min: [amount, { $subtract: ['$totalAmount', '$paidAmount'] }] } } },
+        // Step 2: apply payment + allocate to items + set status
+        {
+          $set: {
+            paidAmount: { $add: ['$paidAmount', '$_payAmt'] },
+            items: {
+              $let: {
+                vars: {
+                  result: {
+                    $reduce: {
+                      input: '$items',
+                      initialValue: { rem: '$_payAmt', items: [] },
+                      in: {
+                        $let: {
+                          vars: {
+                            unpaid: { $max: [0, { $subtract: ['$$this.amount', { $ifNull: ['$$this.paidAmount', 0] }] }] },
+                            prevRem: '$$value.rem'
+                          },
+                          in: {
+                            rem: { $max: [0, { $subtract: ['$$prevRem', { $min: ['$$unpaid', '$$prevRem'] }] }] },
+                            items: {
+                              $concatArrays: [
+                                '$$value.items',
+                                [{
+                                  $mergeObjects: [
+                                    '$$this',
+                                    {
+                                      paidAmount: {
+                                        $add: [
+                                          { $ifNull: ['$$this.paidAmount', 0] },
+                                          { $min: ['$$unpaid', '$$prevRem'] }
+                                        ]
+                                      },
+                                      paidAt: {
+                                        $cond: {
+                                          if: { $gt: [{ $min: ['$$unpaid', '$$prevRem'] }, 0] },
+                                          then: '$$NOW',
+                                          else: '$$this.paidAt'
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }]
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                in: '$$result.items'
+              }
+            },
+            status: {
+              $switch: {
+                branches: [
+                  { case: { $gte: [{ $add: ['$paidAmount', '$_payAmt'] }, '$totalAmount'] }, then: 'paid' }
+                ],
+                default: 'partial'
+              }
+            }
+          }
+        },
+        { $unset: '_payAmt' }
+      ],
+      { new: true }
+    );
+
+    if (!updatedFee) {
+      return res.status(409).json({ error: 'Payment conflict — fee may already be fully paid' });
+    }
+
+    // Compute actual amount deducted (handles case where pipeline capped the amount)
+    const actualAmount = updatedFee.paidAmount - fee.paidAmount;
+
     const payment = new Payment({
       student: req.user.id,
       fee: feeId,
@@ -119,28 +199,6 @@ router.post('/pay', auth, async (req, res) => {
       receipt: `RCP-${Date.now()}`
     });
     await payment.save();
-
-    // Allocate payment to items by priority: tuition → facility → others
-    let remaining_alloc = actualAmount;
-    const items = fee.items.map(item => {
-      const unpaid = (item.amount || 0) - (item.paidAmount || 0);
-      if (unpaid <= 0 || remaining_alloc <= 0) return item;
-      const alloc = Math.min(unpaid, remaining_alloc);
-      remaining_alloc -= alloc;
-      return { ...item.toObject(), paidAmount: (item.paidAmount || 0) + alloc, paidAt: alloc > 0 ? new Date() : item.paidAt };
-    });
-
-    const updatedFee = await Fee.findOneAndUpdate(
-      { _id: feeId },
-      { 
-        $inc: { paidAmount: actualAmount },
-        $set: {
-          items,
-          status: (fee.paidAmount + actualAmount) >= fee.totalAmount ? 'paid' : 'partial'
-        }
-      },
-      { new: true }
-    );
 
     res.status(201).json({ payment, fee: updatedFee });
   } catch (err) {

@@ -142,7 +142,12 @@ router.get('/me', auth, async (req, res) => {
 router.put('/profile', auth, async (req, res) => {
   try {
     const { name, phone, faculty, program, financingType } = req.body;
-    const update = { name, phone, faculty, program };
+    // BUG FIX: Only include fields explicitly provided to avoid clearing existing values
+    const update = {};
+    if (name !== undefined) update.name = name;
+    if (phone !== undefined) update.phone = phone;
+    if (faculty !== undefined) update.faculty = faculty;
+    if (program !== undefined) update.program = program;
     const validFinancing = ['unfinanced', 'ptptn', 'sponsored'];
     if (financingType && validFinancing.includes(financingType)) {
       update.financingType = financingType;
