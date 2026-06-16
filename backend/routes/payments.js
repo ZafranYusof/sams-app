@@ -66,17 +66,36 @@ router.post('/', auth, async (req, res) => {
     });
     await payment.save();
 
-    // Atomic update to prevent race conditions
-    const updatedFee = await Fee.findOneAndUpdate(
-      { _id: targetFeeId },
-      {
-        $inc: { paidAmount: actualAmount },
-        $set: { status: (fee.paidAmount + actualAmount) >= fee.totalAmount ? 'paid' : 'partial' }
-      },
-      { new: true }
+    // Allocate payment to fee items in priority order:
+    // 1. Yuran Pengajian (tuition) — first, so student becomes "active"
+    // 2. Yuran Asrama (facility) — second
+    // 3. Other items (insurance, activity, etc.)
+    const ITEM_PRIORITY = { tuition: 1, facility: 2, insurance: 3, activity: 4, other: 5 };
+    const sortedItems = [...fee.items].sort((a, b) =>
+      (ITEM_PRIORITY[a.category] || 99) - (ITEM_PRIORITY[b.category] || 99)
     );
 
-    res.status(201).json({ payment, fee: updatedFee, txn_id: transactionId, status: 'success' });
+    let amountToAllocate = actualAmount;
+    for (const item of sortedItems) {
+      if (amountToAllocate <= 0) break;
+      const itemRemaining = item.amount - (item.paidAmount || 0);
+      if (itemRemaining <= 0) continue;
+      const apply = Math.min(amountToAllocate, itemRemaining);
+      // Find the actual item in fee.items by _id and update it
+      const targetItem = fee.items.id(item._id);
+      if (targetItem) {
+        targetItem.paidAmount = (targetItem.paidAmount || 0) + apply;
+        if (targetItem.paidAmount >= targetItem.amount) {
+          targetItem.paidAt = new Date();
+        }
+      }
+      amountToAllocate -= apply;
+    }
+
+    // The pre('save') hook will auto-recompute paidAmount + status from items
+    await fee.save();
+
+    res.status(201).json({ payment, fee, txn_id: transactionId, status: 'success' });
   } catch (err) {
     console.error('Payment error:', err.message);
     res.status(500).json({ error: 'Payment failed. Please try again.' });

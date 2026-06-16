@@ -1,8 +1,21 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Fee = require('../models/Fee');
 const { jwtSecret, jwtExpire } = require('../config');
 const { auth } = require('../middleware/auth');
+
+// Helper: derive student academic status from latest fee record.
+// "active" if Yuran Pengajian (tuition) is fully paid for current semester,
+// "inactive" otherwise. Admins default to "active".
+async function getStudentStatus(userId, role) {
+  if (role && role !== 'student') return 'active';
+  const fee = await Fee.findOne({ student: userId }).sort({ createdAt: -1 });
+  if (!fee) return 'inactive';
+  const tuition = fee.items.find(i => i.category === 'tuition');
+  if (!tuition) return 'inactive';
+  return (tuition.paidAmount || 0) >= tuition.amount ? 'active' : 'inactive';
+}
 
 const router = express.Router();
 
@@ -63,7 +76,9 @@ router.post('/login', async (req, res) => {
 // Get profile
 router.get('/profile', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user.id).select('-password').lean();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    user.studentStatus = await getStudentStatus(user._id, user.role);
     res.json(user);
   } catch (err) {
     console.error('Profile error:', err.message);
@@ -74,7 +89,9 @@ router.get('/profile', auth, async (req, res) => {
 // Alias /me -> /profile
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user.id).select('-password').lean();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    user.studentStatus = await getStudentStatus(user._id, user.role);
     res.json(user);
   } catch (err) {
     console.error('Profile error:', err.message);
