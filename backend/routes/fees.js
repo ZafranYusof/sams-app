@@ -302,4 +302,69 @@ router.post('/fix-items', auth, adminOnly, async (req, res) => {
   }
 });
 
+// Admin: Merge duplicate fee records for same student
+router.post('/merge-duplicates', auth, adminOnly, async (req, res) => {
+  try {
+    const allFees = await Fee.find().populate('student', 'studentId');
+    // Group by student
+    const byStudent = {};
+    for (const fee of allFees) {
+      const sid = fee.student?._id?.toString();
+      if (!sid) continue;
+      if (!byStudent[sid]) byStudent[sid] = [];
+      byStudent[sid].push(fee);
+    }
+
+    let merged = 0;
+    for (const [studentId, fees] of Object.entries(byStudent)) {
+      if (fees.length <= 1) continue;
+
+      // Keep the fee with most items or most recent, merge others into it
+      fees.sort((a, b) => b.items.length - a.items.length || new Date(b.createdAt) - new Date(a.createdAt));
+      const keep = fees[0];
+      const merge = fees.slice(1);
+
+      for (const other of merge) {
+        // Add items from other fee that don't already exist
+        for (const item of other.items) {
+          const exists = keep.items.some(i =>
+            i.description === item.description && i.category === item.category
+          );
+          if (!exists) {
+            keep.items.push({
+              description: item.description,
+              amount: item.amount,
+              paidAmount: item.paidAmount || 0,
+              category: item.category || 'other',
+              paidAt: item.paidAt
+            });
+          }
+        }
+        // Recalculate total
+        keep.totalAmount = keep.items.reduce((sum, i) => sum + i.amount, 0);
+        await keep.save();
+        // Delete the merged fee
+        await Fee.findByIdAndDelete(other._id);
+        merged++;
+      }
+    }
+    res.json({ message: `Merged ${merged} duplicate fees`, studentsAffected: Object.keys(byStudent).filter(s => byStudent[s].length > 1).length });
+  } catch (err) {
+    console.error('Merge duplicates error:', err.message);
+    res.status(500).json({ error: 'Failed to merge duplicates' });
+  }
+});
+
+// Admin: Delete a fee by ID
+router.delete('/:id', auth, adminOnly, async (req, res) => {
+  try {
+    const fee = await Fee.findByIdAndDelete(req.params.id);
+    if (!fee) return res.status(404).json({ error: 'Fee not found' });
+    res.json({ message: 'Fee deleted', id: req.params.id });
+  } catch (err) {
+    console.error('Delete fee error:', err.message);
+    res.status(500).json({ error: 'Failed to delete fee' });
+  }
+});
+
 module.exports = router;
