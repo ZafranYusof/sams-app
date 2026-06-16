@@ -18,7 +18,7 @@ router.post('/fcm-token', auth, async (req, res) => {
     }
 
     // $addToSet prevents duplicates
-    await User.findByIdAndUpdate(req.user._id, {
+    await User.findByIdAndUpdate(req.user.id, {
       $addToSet: { fcmTokens: fcmToken },
     });
 
@@ -40,7 +40,7 @@ router.delete('/fcm-token', auth, async (req, res) => {
     if (!fcmToken) {
       return res.status(400).json({ error: 'fcmToken required' });
     }
-    await User.findByIdAndUpdate(req.user._id, {
+    await User.findByIdAndUpdate(req.user.id, {
       $pull: { fcmTokens: fcmToken },
     });
     res.json({ success: true });
