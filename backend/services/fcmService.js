@@ -16,11 +16,26 @@ function init() {
       const sa = require('../firebase-service-account.json');
       credential = admin.cert(sa);
     }
+    
+    // Check if already initialized (e.g. by another module)
+    if (admin.apps.length > 0) {
+      console.log('[FCM] Firebase Admin already initialized');
+      initialized = true;
+      return;
+    }
+    
     admin.initializeApp({ credential });
     initialized = true;
-    console.log('[FCM] Firebase Admin initialized');
+    console.log('[FCM] Firebase Admin initialized successfully');
+    
+    // Verify messaging is available
+    if (typeof admin.messaging !== 'function') {
+      console.error('[FCM] WARNING: admin.messaging is not available after init');
+      initialized = false;
+    }
   } catch (e) {
-    console.error('[FCM] init failed:', e.message);
+    console.error('[FCM] init failed:', e.message, e.stack);
+    initialized = false;
   }
 }
 
