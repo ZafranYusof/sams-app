@@ -61,10 +61,15 @@ router.post('/test-notification', auth, async (req, res) => {
       body: 'Push notifications working. Backend → FCM → your device.',
       data: { type: 'test', timestamp: Date.now().toString() },
     });
-    res.json(result);
+    // Return actual result (includes success, reason, error fields)
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(500).json(result); // Pass through reason/error from FCM service
+    }
   } catch (e) {
     console.error('[users/test-notification]', e);
-    res.status(500).json({ error: 'Send failed' });
+    res.status(500).json({ success: false, error: e.message });
   }
 });
 
