@@ -16,11 +16,10 @@ exports.register = async (req, res) => {
     const user = new User({ studentId, name, email, password, faculty, program, financingType });
     await user.save();
 
-    // Auto-create default semester fee for new students (skip admins + sponsored students)
-    // Sponsored students (JPA, MARA, Yayasan) have their fees handled by sponsor
+    // Auto-create default semester fee for ALL new students (admins skipped).
+    // Sponsored students still get the fee record — restriction rules differ only.
     const isStudent = user.role === 'student' || !user.role;
-    const isSponsored = user.financingType === 'sponsored';
-    if (isStudent && !isSponsored) {
+    if (isStudent) {
       try {
         const defaultFee = new Fee(buildDefaultFee(user._id));
         await defaultFee.save();
