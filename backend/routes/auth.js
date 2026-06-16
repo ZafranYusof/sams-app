@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Fee = require('../models/Fee');
 const { jwtSecret, jwtExpire } = require('../config');
 const { auth } = require('../middleware/auth');
-const { computeStudentStatus } = require('../config/defaultFees');
+const { computeStudentStatus, buildDefaultFee } = require('../config/defaultFees');
 
 // Helper: derive student academic status from latest fee record + UMP payment schedule.
 // Returns one of: 'active', 'warning', 'restricted_1', 'restricted_2', 'deferred', 'restricted_3'.
@@ -22,7 +22,7 @@ const router = express.Router();
 router.post('/register', async (req, res) => {
   try {
     const studentId = req.body.studentId || req.body.student_id;
-    const { name, email, password, faculty, program } = req.body;
+    const { name, email, password, faculty, program, financingType } = req.body;
 
     // [Bug #8] Input validation on registration
     if (!studentId || !name || !email || !password) {
@@ -36,16 +36,40 @@ router.post('/register', async (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
-    
+    // Validate financingType if provided
+    const validFinancing = ['unfinanced', 'ptptn', 'sponsored'];
+    const ft = financingType && validFinancing.includes(financingType) ? financingType : 'unfinanced';
+
     const exists = await User.findOne({ $or: [{ email }, { studentId }] });
     if (exists) return res.status(400).json({ error: 'User already exists' });
 
-    const user = new User({ studentId, name, email, password, faculty, program });
+    const user = new User({ studentId, name, email, password, faculty, program, financingType: ft });
     await user.save();
 
+    // Auto-create default semester fee for new students (skip admins + sponsored students).
+    // Sponsored students (JPA, MARA, Yayasan) have their fees handled by sponsor.
+    const isStudent = user.role === 'student' || !user.role;
+    const isSponsored = user.financingType === 'sponsored';
+    if (isStudent && !isSponsored) {
+      try {
+        const defaultFee = new Fee(buildDefaultFee(user._id));
+        await defaultFee.save();
+      } catch (feeErr) {
+        // Non-fatal — registration succeeds even if fee seeding fails
+        console.error('[register] failed to seed default fee:', feeErr.message);
+      }
+    }
+
     const token = jwt.sign({ id: user._id, role: user.role }, jwtSecret, { expiresIn: jwtExpire });
-    // [Bug #4] Include studentId in register response
-    res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, studentId: user.studentId, student_id: user.studentId } });
+    // [Bug #4] Include studentId + financingType in register response
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id, name: user.name, email: user.email, role: user.role,
+        studentId: user.studentId, student_id: user.studentId,
+        financingType: user.financingType,
+      }
+    });
   } catch (err) {
     // [Bug #9] Don't leak internal errors
     console.error('Register error:', err.message);
@@ -65,7 +89,14 @@ router.post('/login', async (req, res) => {
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user._id, role: user.role }, jwtSecret, { expiresIn: jwtExpire });
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, studentId: user.studentId, student_id: user.studentId } });
+    res.json({
+      token,
+      user: {
+        id: user._id, name: user.name, email: user.email, role: user.role,
+        studentId: user.studentId, student_id: user.studentId,
+        financingType: user.financingType,
+      }
+    });
   } catch (err) {
     console.error('Login error:', err.message);
     res.status(500).json({ error: 'Login failed. Please try again.' });
@@ -101,8 +132,13 @@ router.get('/me', auth, async (req, res) => {
 // Update profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { name, phone, faculty, program } = req.body;
-    const user = await User.findByIdAndUpdate(req.user.id, { name, phone, faculty, program }, { new: true }).select('-password');
+    const { name, phone, faculty, program, financingType } = req.body;
+    const update = { name, phone, faculty, program };
+    const validFinancing = ['unfinanced', 'ptptn', 'sponsored'];
+    if (financingType && validFinancing.includes(financingType)) {
+      update.financingType = financingType;
+    }
+    const user = await User.findByIdAndUpdate(req.user.id, update, { new: true }).select('-password');
     res.json(user);
   } catch (err) {
     console.error('Update profile error:', err.message);
