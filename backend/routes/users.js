@@ -56,7 +56,7 @@ router.delete('/fcm-token', auth, async (req, res) => {
  */
 router.post('/test-notification', auth, async (req, res) => {
   try {
-    const result = await fcm.sendToUser(req.user._id.toString(), {
+    const result = await fcm.sendToUser(req.user.id, {
       title: 'SAMS Test Notification',
       body: 'Push notifications working. Backend → FCM → your device.',
       data: { type: 'test', timestamp: Date.now().toString() },
