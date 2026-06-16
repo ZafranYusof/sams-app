@@ -73,4 +73,22 @@ router.post('/test-notification', auth, async (req, res) => {
   }
 });
 
+/**
+ * List all users (admin only).
+ * GET /api/users
+ */
+router.get('/', auth, async (req, res) => {
+  try {
+    // Only admins can list all users
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    const users = await User.find().select('-password -fcmTokens').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (e) {
+    console.error('[users GET]', e);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
 module.exports = router;

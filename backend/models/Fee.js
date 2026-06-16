@@ -18,15 +18,6 @@ const feeSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-// Computed: student is "active" if Yuran Pengajian (tuition) is fully paid,
-// even if other fees (asrama, etc.) are still outstanding.
-feeSchema.virtual('studentStatus').get(function () {
-  const tuitionItem = this.items.find(i => i.category === 'tuition');
-  if (!tuitionItem) return 'unknown';
-  const tuitionPaid = (tuitionItem.paidAmount || 0) >= tuitionItem.amount;
-  return tuitionPaid ? 'active' : 'inactive';
-});
-
 // Auto-derive overall status from item-level payment data
 feeSchema.pre('save', function (next) {
   // Auto-allocate: if fee-level paidAmount > 0 but items not synced, allocate to items
@@ -66,7 +57,16 @@ feeSchema.pre('save', function (next) {
   next();
 });
 
-feeSchema.set('toJSON', { virtuals: true });
+feeSchema.set('toJSON', {
+  virtuals: true,
+  transform: function (doc, ret) {
+    // Flatten studentId to top level for easier access
+    if (ret.student && ret.student.studentId) {
+      ret.studentId = ret.student.studentId;
+    }
+    return ret;
+  }
+});
 feeSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model('Fee', feeSchema);
