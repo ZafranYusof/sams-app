@@ -96,8 +96,8 @@ router.post('/pay', auth, async (req, res) => {
     
     const fee = await Fee.findById(feeId);
     if (!fee) return res.status(404).json({ error: 'Fee not found' });
-    // Authorization: only fee owner can pay
-    if (fee.student.toString() !== req.user.id) {
+    // Authorization: fee owner or admin can pay
+    if (fee.student.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'You can only pay your own fees' });
     }
     if (fee.status === 'paid') return res.status(400).json({ error: 'Already fully paid' });

@@ -6,7 +6,7 @@ const feeSchema = new mongoose.Schema({
   academicYear: { type: String, required: true },
   items: [{
     description: { type: String, required: true },
-    amount: { type: Number, required: true },
+    amount: { type: Number, required: true, min: [0.01, 'Amount must be positive'] },
     paidAmount: { type: Number, default: 0 },
     category: { type: String, enum: ['tuition', 'facility', 'insurance', 'activity', 'other'] },
     paidAt: { type: Date }

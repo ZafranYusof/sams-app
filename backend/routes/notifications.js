@@ -115,11 +115,7 @@ router.post('/send-reminder', auth, adminOnly, async (req, res) => {
       data: { type: 'reminder' },
     });
 
-    res.status(201).json({ 
-      success: true, 
-      count: created.length,
-      debug: { sent: studentIds, resolved: resolved.map(r => ({ ...r, found: !!r.userId })) }
-    });
+    res.status(201).json({ success: true, count: created.length });
   } catch (err) {
     console.error('Send reminder error:', err.message);
     res.status(500).json({ error: 'Failed to send reminders' });

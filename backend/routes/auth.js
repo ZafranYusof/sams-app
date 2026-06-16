@@ -1,10 +1,14 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Fee = require('../models/Fee');
 const { jwtSecret, jwtExpire } = require('../config');
 const { auth } = require('../middleware/auth');
 const { computeStudentStatus, buildDefaultFee } = require('../config/defaultFees');
+
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'Too many login attempts, please try again later' });
+const registerLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: 'Too many registration attempts, please try again later' });
 
 // Helper: derive student academic status from latest fee record + UMP payment schedule.
 // Returns one of: 'active', 'warning', 'restricted_1', 'restricted_2', 'deferred', 'restricted_3'.
@@ -19,7 +23,7 @@ async function getStudentStatus(userDoc) {
 const router = express.Router();
 
 // Register
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   try {
     const studentId = req.body.studentId || req.body.student_id;
     const { name, email, password, faculty, program, financingType } = req.body;
@@ -85,7 +89,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const identifier = req.body.email || req.body.student_id || req.body.studentId;
     const { password } = req.body;
