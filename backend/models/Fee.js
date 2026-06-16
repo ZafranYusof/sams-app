@@ -20,6 +20,11 @@ const feeSchema = new mongoose.Schema({
 
 // Auto-derive overall status from item-level payment data
 feeSchema.pre('save', function (next) {
+  // Recalculate totalAmount from items (catches treasury-added items)
+  if (this.items && this.items.length > 0) {
+    this.totalAmount = this.items.reduce((sum, i) => sum + (i.amount || 0), 0);
+  }
+
   // Auto-allocate: if fee-level paidAmount > 0 but items not synced, allocate to items
   const itemsPaid = this.items.reduce((sum, i) => sum + (i.paidAmount || 0), 0);
   if (this.paidAmount > 0 && itemsPaid === 0) {
