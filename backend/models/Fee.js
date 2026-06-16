@@ -29,6 +29,24 @@ feeSchema.virtual('studentStatus').get(function () {
 
 // Auto-derive overall status from item-level payment data
 feeSchema.pre('save', function (next) {
+  // Auto-allocate: if fee-level paidAmount > 0 but items not synced, allocate to items
+  const itemsPaid = this.items.reduce((sum, i) => sum + (i.paidAmount || 0), 0);
+  if (this.paidAmount > 0 && itemsPaid === 0) {
+    // Allocate fee-level payment to items in priority order
+    const PRIORITY = { tuition: 1, facility: 2, insurance: 3, activity: 4, other: 5 };
+    const sorted = [...this.items].sort((a, b) =>
+      (PRIORITY[a.category] || 99) - (PRIORITY[b.category] || 99)
+    );
+    let remaining = this.paidAmount;
+    for (const item of sorted) {
+      if (remaining <= 0) break;
+      const apply = Math.min(remaining, item.amount);
+      item.paidAmount = apply;
+      if (apply >= item.amount) item.paidAt = new Date();
+      remaining -= apply;
+    }
+  }
+
   // Re-compute paidAmount from item-level data
   this.paidAmount = this.items.reduce((sum, i) => sum + (i.paidAmount || 0), 0);
 

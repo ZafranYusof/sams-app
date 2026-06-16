@@ -283,4 +283,23 @@ router.get('/', auth, adminOnly, async (req, res) => {
   }
 });
 
+// Admin: Fix all fee item allocations (one-time migration)
+router.post('/fix-items', auth, adminOnly, async (req, res) => {
+  try {
+    const fees = await Fee.find();
+    let fixed = 0;
+    for (const fee of fees) {
+      const itemsPaid = fee.items.reduce((sum, i) => sum + (i.paidAmount || 0), 0);
+      if (fee.paidAmount > 0 && itemsPaid === 0 && fee.items.length > 0) {
+        await fee.save(); // pre-save hook will auto-allocate
+        fixed++;
+      }
+    }
+    res.json({ message: `Fixed ${fixed} fees`, total: fees.length });
+  } catch (err) {
+    console.error('Fix items error:', err.message);
+    res.status(500).json({ error: 'Failed to fix items' });
+  }
+});
+
 module.exports = router;
