@@ -2,6 +2,7 @@ const admin = require('firebase-admin');
 const User = require('../models/User');
 
 let initialized = false;
+let initError = null; // Track init failure reason
 
 function init() {
   if (initialized) return;
@@ -36,6 +37,7 @@ function init() {
   } catch (e) {
     console.error('[FCM] init failed:', e.message, e.stack);
     initialized = false;
+    initError = e.message; // Save for debugging
   }
 }
 
@@ -48,7 +50,7 @@ async function sendToUser(userId, payload) {
   init();
   if (!initialized) {
     console.warn('[FCM] not initialized, skipping push');
-    return { success: false, reason: 'not_initialized' };
+    return { success: false, reason: 'not_initialized', error: initError || 'Unknown init error' };
   }
 
   // Check if messaging() is available
