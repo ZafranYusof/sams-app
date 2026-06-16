@@ -8,16 +8,19 @@ const { buildDefaultFee } = require('../config/defaultFees');
 exports.register = async (req, res) => {
   try {
     const studentId = req.body.studentId || req.body.student_id;
-    const { name, email, password, faculty, program } = req.body;
+    const { name, email, password, faculty, program, financingType } = req.body;
 
     const exists = await User.findOne({ $or: [{ email }, { studentId }] });
     if (exists) return res.status(400).json({ error: 'User already exists' });
 
-    const user = new User({ studentId, name, email, password, faculty, program });
+    const user = new User({ studentId, name, email, password, faculty, program, financingType });
     await user.save();
 
-    // Auto-create default semester fee for new students (skip admins)
-    if (user.role === 'student' || !user.role) {
+    // Auto-create default semester fee for new students (skip admins + sponsored students)
+    // Sponsored students (JPA, MARA, Yayasan) have their fees handled by sponsor
+    const isStudent = user.role === 'student' || !user.role;
+    const isSponsored = user.financingType === 'sponsored';
+    if (isStudent && !isSponsored) {
       try {
         const defaultFee = new Fee(buildDefaultFee(user._id));
         await defaultFee.save();

@@ -8,11 +8,12 @@ const { computeStudentStatus } = require('../config/defaultFees');
 
 // Helper: derive student academic status from latest fee record + UMP payment schedule.
 // Returns one of: 'active', 'warning', 'restricted_1', 'restricted_2', 'deferred', 'restricted_3'.
-// Admins always 'active'.
-async function getStudentStatus(userId, role, financingType = 'unfinanced') {
-  if (role && role !== 'student') return 'active';
-  const fee = await Fee.findOne({ student: userId }).sort({ createdAt: -1 });
-  return computeStudentStatus(fee, new Date(), financingType);
+// Admins always 'active'. financingType pulled from user document.
+async function getStudentStatus(userDoc) {
+  if (!userDoc) return 'active';
+  if (userDoc.role && userDoc.role !== 'student') return 'active';
+  const fee = await Fee.findOne({ student: userDoc._id }).sort({ createdAt: -1 });
+  return computeStudentStatus(fee, new Date(), userDoc.financingType || 'unfinanced');
 }
 
 const router = express.Router();
@@ -76,7 +77,7 @@ router.get('/profile', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password').lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
-    user.studentStatus = await getStudentStatus(user._id, user.role);
+    user.studentStatus = await getStudentStatus(user);
     res.json(user);
   } catch (err) {
     console.error('Profile error:', err.message);
@@ -89,7 +90,7 @@ router.get('/me', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password').lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
-    user.studentStatus = await getStudentStatus(user._id, user.role);
+    user.studentStatus = await getStudentStatus(user);
     res.json(user);
   } catch (err) {
     console.error('Profile error:', err.message);

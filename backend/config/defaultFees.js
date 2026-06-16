@@ -57,7 +57,7 @@ function buildDefaultFee(studentObjectId, options = {}) {
  *
  * @param {Object} fee - latest Fee document for the student
  * @param {Date} now   - reference date (defaults to current time)
- * @param {String} financingType - 'unfinanced' | 'ptptn' | 'financed' (default: unfinanced)
+ * @param {String} financingType - 'unfinanced' | 'ptptn' | 'sponsored' (default: unfinanced)
  */
 function computeStudentStatus(fee, now = new Date(), financingType = 'unfinanced') {
   if (!fee) return 'active'; // No fee record yet (shouldn't happen post-backfill)
@@ -68,10 +68,13 @@ function computeStudentStatus(fee, now = new Date(), financingType = 'unfinanced
   const asramaPaid = asramaItem ? (asramaItem.paidAmount || 0) >= asramaItem.amount : true;
   const fullyPaid = (fee.paidAmount || 0) >= fee.totalAmount;
 
-  // Week 18+: 3rd restriction for financed students with outstanding debt
-  if (now >= PAYMENT_SCHEDULE.thirdRestriction && financingType === 'financed' && !fullyPaid) {
-    return 'restricted_3';
+  // Sponsored students: only 3rd restriction applies (week 18) if sponsor debt remains
+  if (financingType === 'sponsored') {
+    if (now >= PAYMENT_SCHEDULE.thirdRestriction && !fullyPaid) return 'restricted_3';
+    return 'active';
   }
+
+  // Unfinanced + PTPTN students share same schedule
 
   // Week 11+: Deferment if debt still unsettled
   if (now >= PAYMENT_SCHEDULE.defermentDate && !fullyPaid) {

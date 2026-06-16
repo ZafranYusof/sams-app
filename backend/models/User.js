@@ -13,6 +13,15 @@ const userSchema = new mongoose.Schema({
   phone: { type: String },
   avatar: { type: String },
   fcmTokens: { type: [String], default: [] },
+  // Financing type — controls which payment schedule rules apply.
+  // 'unfinanced' = pay from own pocket
+  // 'ptptn'      = government PTPTN loan
+  // 'sponsored'  = full sponsor (JPA, MARA, Yayasan, etc.)
+  financingType: {
+    type: String,
+    enum: ['unfinanced', 'ptptn', 'sponsored'],
+    default: 'unfinanced'
+  },
   createdAt: { type: Date, default: Date.now }
 });
 
