@@ -133,7 +133,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
       _parseActivities(results[2]);
       _parseAttendance(results[3]);
       _buildUpcomingItems();
-      _buildRecentActivity();
+      _loadRecentActivity();
     } catch (_) {
       // Graceful fallback — show zeros
     } finally {
@@ -237,7 +237,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
     setState(() => _upcomingItems = items.take(3).toList());
   }
 
-  void _buildRecentActivity() {
+  void _loadRecentActivity() {
     setState(() {
       _recentActivity = [
         {
@@ -589,7 +589,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
     required VoidCallback onTap,
   }) {
     return PressableCard(
-      onPressed: onTap,
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -943,7 +943,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
   Widget _buildUpcomingItem(Map<String, dynamic> item, int index) {
     final color = item['color'] as Color;
     return PressableCard(
-      onPressed: () => HapticFeedback.selectionClick(),
+      onTap: () => HapticFeedback.selectionClick(),
       child: Container(
         margin: EdgeInsets.only(bottom: index < _upcomingItems.length - 1 ? 10 : 0),
         padding: const EdgeInsets.all(14),
@@ -1119,7 +1119,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
   Widget _buildActivityItem(Map<String, dynamic> item, int index) {
     final color = item['color'] as Color;
     return PressableCard(
-      onPressed: () => HapticFeedback.selectionClick(),
+      onTap: () => HapticFeedback.selectionClick(),
       child: Container(
         margin: EdgeInsets.only(
           bottom: index < _recentActivity.length - 1 ? 10 : 0,

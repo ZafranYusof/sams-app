@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:figma_squircle/figma_squircle.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/theme.dart';
 import '../../../services/api_service.dart';
@@ -136,8 +135,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
     HapticFeedback.mediumImpact();
     try {
       final response = await ApiService.put(
-        '/activities/claim/$claimId/review',
-        body: {'status': action},
+        '/activities/claim/$claimId/review', {'status': action},
       );
       if (response != null) {
         await _loadData();
@@ -350,7 +348,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
                   right: kpi == kpis.last ? 0 : 6,
                 ),
                 child: PressableCard(
-                  onPressed: () => HapticFeedback.lightImpact(),
+                  onTap: () => HapticFeedback.lightImpact(),
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: ShapeDecoration(
@@ -469,7 +467,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
                       right: action == actions.last ? 0 : 6,
                     ),
                     child: PressableCard(
-                      onPressed: action.onTap,
+                      onTap: action.onTap,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -609,7 +607,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: PressableCard(
-        onPressed: () => HapticFeedback.lightImpact(),
+        onTap: () => HapticFeedback.lightImpact(),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: ShapeDecoration(
@@ -691,10 +689,10 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
                       onTap: () async {
                         HapticFeedback.lightImpact();
                         final uri = Uri.parse(supportingDoc);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri,
-                              mode: LaunchMode.externalApplication);
-                        }
+                        // url_launcher not available
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Document: $supportingDoc')),
+                        );
                       },
                       child: Row(
                         children: [
@@ -859,7 +857,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: PressableCard(
-        onPressed: () => HapticFeedback.lightImpact(),
+        onTap: () => HapticFeedback.lightImpact(),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: ShapeDecoration(

@@ -1,10 +1,10 @@
+import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:figma_squircle/figma_squircle.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:flip_panel_plus/flip_panel_plus.dart';
 
 import '../../../config/theme.dart';
 import '../../../services/api_service.dart';

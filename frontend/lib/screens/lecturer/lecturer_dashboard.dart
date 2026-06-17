@@ -27,7 +27,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
   late Animation<double> _recentAnim;
   late Animation<double> _statsAnim;
 
-  final ApiService _apiService = ApiService();
+  
 
   bool _loading = true;
   bool _refreshing = false;
@@ -89,7 +89,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
-      final sessionsResponse = await _apiService.get('/sessions');
+      final sessionsResponse = await ApiService.get('/sessions');
       final List sessions = sessionsResponse['data'] ?? [];
       final today = DateTime.now();
       final todaySessions = sessions.where((s) {
@@ -115,7 +115,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
         final recentSessions = sessions.take(5).toList();
         for (var s in recentSessions) {
           try {
-            final att = await _apiService.get('/attendance/session/${s['id']}');
+            final att = await ApiService.get('/attendance/session/${s['id']}');
             final records = att['data'] ?? [];
             int present = 0, absent = 0, late = 0;
             for (var r in records) {
@@ -488,7 +488,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
     final status = (session['status'] ?? 'upcoming').toString();
 
     return PressableCard(
-      onPressed: () {
+      onTap: () {
         HapticFeedback.lightImpact();
       },
       child: Container(
@@ -601,7 +601,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
       {'icon': Iconsax.scan_barcode, 'label': 'Generate Code', 'color': const Color(0xFF5C33CF)},
       {'icon': Iconsax.chart_21, 'label': 'View Attendance', 'color': const Color(0xFF2196F3)},
       {'icon': Iconsax.calendar, 'label': 'My Sessions', 'color': const Color(0xFF4CAF50)},
-      {'icon': Iconsax.document_chart, 'label': 'Attendance Report', 'color': const Color(0xFFFF9800)},
+      {'icon': Iconsax.document_text, 'label': 'Attendance Report', 'color': const Color(0xFFFF9800)},
     ];
 
     return AnimatedBuilder(
@@ -638,7 +638,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
                     itemBuilder: (context, index) {
                       final action = actions[index];
                       return PressableCard(
-                        onPressed: () {
+                        onTap: () {
                           HapticFeedback.lightImpact();
                           // Navigate based on action
                         },
@@ -840,7 +840,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
     } catch (_) {}
 
     return PressableCard(
-      onPressed: () {
+      onTap: () {
         HapticFeedback.lightImpact();
       },
       child: Container(
