@@ -410,7 +410,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard>
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: SAMsTheme.primary.withOpacity(0.15),
+                  color: SAMsTheme.primary.withValues(alpha:0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
@@ -581,7 +581,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard>
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.15),
+                  color: accentColor.withValues(alpha:0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: accentColor, size: 18),
@@ -699,7 +699,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard>
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: action.color.withOpacity(0.15),
+                              color: action.color.withValues(alpha:0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
@@ -821,7 +821,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard>
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.15),
+                color: statusColor.withValues(alpha:0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -878,7 +878,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.15),
+                    color: statusColor.withValues(alpha:0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -950,7 +950,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard>
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6C63FF).withOpacity(0.15),
+                              color: const Color(0xFF6C63FF).withValues(alpha:0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
@@ -1002,7 +1002,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard>
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00BFA6).withOpacity(0.15),
+                              color: const Color(0xFF00BFA6).withValues(alpha:0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
@@ -1150,7 +1150,7 @@ class _OpenRegistrationSheetState extends State<_OpenRegistrationSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: SAMsTheme.textSecondary.withOpacity(0.3),
+                  color: SAMsTheme.textSecondary.withValues(alpha:0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1182,7 +1182,7 @@ class _OpenRegistrationSheetState extends State<_OpenRegistrationSheet> {
                     cornerSmoothing: 0.6,
                   ),
                   side: BorderSide(
-                    color: SAMsTheme.textSecondary.withOpacity(0.2),
+                    color: SAMsTheme.textSecondary.withValues(alpha:0.2),
                   ),
                 ),
               ),
@@ -1276,13 +1276,13 @@ class _OpenRegistrationSheetState extends State<_OpenRegistrationSheet> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: SAMsTheme.textSecondary.withOpacity(0.2),
+            color: SAMsTheme.textSecondary.withValues(alpha:0.2),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: SAMsTheme.textSecondary.withOpacity(0.2),
+            color: SAMsTheme.textSecondary.withValues(alpha:0.2),
           ),
         ),
         focusedBorder: OutlineInputBorder(

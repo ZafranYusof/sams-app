@@ -246,7 +246,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: SAMsTheme.primary.withOpacity(0.15),
+                    color: SAMsTheme.primary.withValues(alpha:0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -308,21 +308,21 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
         value: _pendingCount.toString(),
         icon: Iconsax.clock_copy,
         color: const Color(0xFFF59E0B),
-        bgColor: const Color(0xFFF59E0B).withOpacity(0.12),
+        bgColor: const Color(0xFFF59E0B).withValues(alpha:0.12),
       ),
       _KpiData(
         label: 'Approved Today',
         value: _approvedTodayCount.toString(),
         icon: Iconsax.tick_circle_copy,
         color: const Color(0xFF22C55E),
-        bgColor: const Color(0xFF22C55E).withOpacity(0.12),
+        bgColor: const Color(0xFF22C55E).withValues(alpha:0.12),
       ),
       _KpiData(
         label: 'Rejected',
         value: _rejectedCount.toString(),
         icon: Iconsax.close_circle_copy,
         color: Colors.red,
-        bgColor: Colors.red.withOpacity(0.12),
+        bgColor: Colors.red.withValues(alpha:0.12),
       ),
     ];
 
@@ -488,7 +488,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: action.color.withOpacity(0.12),
+                                color: action.color.withValues(alpha:0.12),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Icon(
@@ -556,7 +556,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withOpacity(0.12),
+                      color: const Color(0xFFF59E0B).withValues(alpha:0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -628,7 +628,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: SAMsTheme.primary.withOpacity(0.12),
+                      color: SAMsTheme.primary.withValues(alpha:0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -724,10 +724,10 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
                       child: Container(
                         height: 38,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF22C55E).withOpacity(0.12),
+                          color: const Color(0xFF22C55E).withValues(alpha:0.12),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: const Color(0xFF22C55E).withOpacity(0.3),
+                            color: const Color(0xFF22C55E).withValues(alpha:0.3),
                           ),
                         ),
                         child: Row(
@@ -759,10 +759,10 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
                       child: Container(
                         height: 38,
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.12),
+                          color: Colors.red.withValues(alpha:0.12),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: Colors.red.withOpacity(0.3),
+                            color: Colors.red.withValues(alpha:0.3),
                           ),
                         ),
                         child: Row(
@@ -875,7 +875,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: _statusColor(status).withOpacity(0.12),
+                  color: _statusColor(status).withValues(alpha:0.12),
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: Icon(
@@ -937,7 +937,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _statusColor(status).withOpacity(0.12),
+        color: _statusColor(status).withValues(alpha:0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -966,7 +966,7 @@ class _PusatAdabDashboardState extends State<PusatAdabDashboard>
       ),
       child: Column(
         children: [
-          Icon(icon, size: 48, color: SAMsTheme.textSecondary.withOpacity(0.4)),
+          Icon(icon, size: 48, color: SAMsTheme.textSecondary.withValues(alpha:0.4)),
           const SizedBox(height: 12),
           Text(
             message,

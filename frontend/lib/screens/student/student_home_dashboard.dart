@@ -378,7 +378,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
                       gradient: LinearGradient(
                         colors: [
                           SAMsTheme.primary,
-                          SAMsTheme.primary.withOpacity(0.6),
+                          SAMsTheme.primary.withValues(alpha:0.6),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -434,7 +434,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: SAMsTheme.primary.withOpacity(0.12),
+                                color: SAMsTheme.primary.withValues(alpha:0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -596,7 +596,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
           color: SAMsTheme.surface,
           borderRadius: SmoothBorderRadius(cornerRadius: 18, cornerSmoothing: 0.6),
           border: Border.all(
-            color: accent.withOpacity(0.15),
+            color: accent.withValues(alpha:0.15),
             width: 1,
           ),
         ),
@@ -610,7 +610,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: accent.withOpacity(0.12),
+                    color: accent.withValues(alpha:0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: accent, size: 20),
@@ -619,7 +619,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
-                    color: badgeColor.withOpacity(0.12),
+                    color: badgeColor.withValues(alpha:0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -658,7 +658,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
               mainLabel,
               style: GoogleFonts.inter(
                 fontSize: 11,
-                color: SAMsTheme.textSecondary.withOpacity(0.7),
+                color: SAMsTheme.textSecondary.withValues(alpha:0.7),
               ),
             ),
           ],
@@ -763,7 +763,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha:0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 18),
@@ -868,7 +868,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
           Icon(
             Iconsax.calendar_tick,
             size: 40,
-            color: SAMsTheme.textSecondary.withOpacity(0.4),
+            color: SAMsTheme.textSecondary.withValues(alpha:0.4),
           ),
           const SizedBox(height: 12),
           Text(
@@ -884,7 +884,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
             'You\'re all caught up!',
             style: GoogleFonts.inter(
               fontSize: 12,
-              color: SAMsTheme.textSecondary.withOpacity(0.6),
+              color: SAMsTheme.textSecondary.withValues(alpha:0.6),
             ),
           ),
         ],
@@ -951,7 +951,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
           color: SAMsTheme.surface,
           borderRadius: SmoothBorderRadius(cornerRadius: 14, cornerSmoothing: 0.6),
           border: Border.all(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha:0.1),
             width: 1,
           ),
         ),
@@ -962,7 +962,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha:0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(item['icon'] as IconData, color: color, size: 20),
@@ -997,7 +997,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
               item['time'] ?? '',
               style: GoogleFonts.inter(
                 fontSize: 11,
-                color: SAMsTheme.textSecondary.withOpacity(0.7),
+                color: SAMsTheme.textSecondary.withValues(alpha:0.7),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1135,7 +1135,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha:0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(item['icon'] as IconData, color: color, size: 18),
@@ -1168,7 +1168,7 @@ class _StudentHomeDashboardState extends State<StudentHomeDashboard>
               item['time'] ?? '',
               style: GoogleFonts.inter(
                 fontSize: 10,
-                color: SAMsTheme.textSecondary.withOpacity(0.6),
+                color: SAMsTheme.textSecondary.withValues(alpha:0.6),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1276,7 +1276,7 @@ class _PlaceholderScreen extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha:0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(_icon(), color: color, size: 32),

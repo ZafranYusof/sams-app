@@ -194,11 +194,11 @@ class _LecturerDashboardState extends State<LecturerDashboard>
       case 'lecture':
         return SAMsTheme.primary;
       case 'tutorial':
-        return const Color(0xFF2196F3);
+        return SAMsTheme.primary;
       case 'lab':
-        return const Color(0xFF4CAF50);
+        return SAMsTheme.success;
       case 'seminar':
-        return const Color(0xFFFF9800);
+        return SAMsTheme.warning;
       default:
         return SAMsTheme.primary;
     }
@@ -402,7 +402,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
           Icon(
             Iconsax.calendar_tick,
             size: 40,
-            color: SAMsTheme.textSecondary.withOpacity(0.5),
+            color: SAMsTheme.textSecondary.withValues(alpha:0.5),
           ),
           const SizedBox(height: 12),
           Text(
@@ -418,7 +418,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
             'Enjoy your free day!',
             style: GoogleFonts.inter(
               fontSize: 12,
-              color: SAMsTheme.textSecondary.withOpacity(0.7),
+              color: SAMsTheme.textSecondary.withValues(alpha:0.7),
             ),
           ),
         ],
@@ -498,7 +498,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
           color: SAMsTheme.surface,
           borderRadius: SmoothBorderRadius(cornerRadius: 16, cornerSmoothing: 0.6),
           border: Border.all(
-            color: accentColor.withOpacity(0.2),
+            color: accentColor.withValues(alpha:0.2),
             width: 1,
           ),
         ),
@@ -510,7 +510,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.15),
+                    color: accentColor.withValues(alpha:0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -534,7 +534,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: status.toLowerCase() == 'ongoing'
-                        ? const Color(0xFF4CAF50).withOpacity(0.15)
+                        ? SAMsTheme.success.withValues(alpha:0.15)
                         : SAMsTheme.surfaceLight,
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -543,7 +543,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       color: status.toLowerCase() == 'ongoing'
-                          ? const Color(0xFF4CAF50)
+                          ? SAMsTheme.success
                           : SAMsTheme.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
@@ -599,9 +599,9 @@ class _LecturerDashboardState extends State<LecturerDashboard>
   Widget _buildQuickActions() {
     final actions = [
       {'icon': Iconsax.scan_barcode, 'label': 'Generate Code', 'color': const Color(0xFF5C33CF)},
-      {'icon': Iconsax.chart_21, 'label': 'View Attendance', 'color': const Color(0xFF2196F3)},
-      {'icon': Iconsax.calendar, 'label': 'My Sessions', 'color': const Color(0xFF4CAF50)},
-      {'icon': Iconsax.document_text, 'label': 'Attendance Report', 'color': const Color(0xFFFF9800)},
+      {'icon': Iconsax.chart_21, 'label': 'View Attendance', 'color': SAMsTheme.primary},
+      {'icon': Iconsax.calendar, 'label': 'My Sessions', 'color': SAMsTheme.success},
+      {'icon': Iconsax.document_text, 'label': 'Attendance Report', 'color': SAMsTheme.warning},
     ];
 
     return AnimatedBuilder(
@@ -657,7 +657,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: (action['color'] as Color).withOpacity(0.12),
+                                  color: (action['color'] as Color).withValues(alpha:0.12),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(
@@ -761,7 +761,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
           Icon(
             Iconsax.chart_21,
             size: 36,
-            color: SAMsTheme.textSecondary.withOpacity(0.5),
+            color: SAMsTheme.textSecondary.withValues(alpha:0.5),
           ),
           const SizedBox(height: 10),
           Text(
@@ -856,7 +856,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: SAMsTheme.primary.withOpacity(0.12),
+                color: SAMsTheme.primary.withValues(alpha:0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -891,11 +891,11 @@ class _LecturerDashboardState extends State<LecturerDashboard>
             ),
             Row(
               children: [
-                _buildCountBadge('$present', const Color(0xFF4CAF50)),
+                _buildCountBadge('$present', SAMsTheme.success),
                 const SizedBox(width: 6),
                 _buildCountBadge('$absent', const Color(0xFFF44336)),
                 const SizedBox(width: 6),
-                _buildCountBadge('$late', const Color(0xFFFF9800)),
+                _buildCountBadge('$late', SAMsTheme.warning),
               ],
             ),
           ],
@@ -908,7 +908,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha:0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -960,7 +960,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
                           icon: Iconsax.chart_21,
                           label: 'Avg Attendance',
                           value: '${_avgAttendanceRate.toStringAsFixed(1)}%',
-                          color: const Color(0xFF4CAF50),
+                          color: SAMsTheme.success,
                         ),
                       ),
                     ],
@@ -993,7 +993,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha:0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 18),
