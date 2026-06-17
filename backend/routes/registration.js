@@ -1,101 +1,108 @@
 const express = require('express');
-const mongoose = require('mongoose');
-const Course = require('../models/Course');
-const Registration = require('../models/Registration');
-const { auth, adminOnly } = require('../middleware/auth');
-
 const router = express.Router();
+const Enrollment = require('../models/Enrollment');
+const Session = require('../models/Session');
+const Course = require('../models/Course');
+const FacultyRegistrar = require('../models/FacultyRegistrar');
+const { auth } = require('../middleware/auth');
 
-// Get available courses
-router.get('/courses', auth, async (req, res) => {
+// POST /registration/open — FacultyRegistrar opens registration for a session
+router.post('/open', auth, async (req, res) => {
   try {
-    const { semester, faculty } = req.query;
-    const filter = { status: 'active' };
-    if (semester) filter.semester = semester;
-    if (faculty) filter.faculty = faculty;
-    const courses = await Course.find(filter).populate('lecturer', 'name');
-    res.json(courses);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Register for a course
-router.post('/register', auth, async (req, res) => {
-  try {
-    const { courseId, semester, academicYear } = req.body;
-    if (!courseId || !mongoose.Types.ObjectId.isValid(courseId)) {
-      return res.status(400).json({ error: 'Invalid course ID' });
+    if (req.user.role !== 'admin' && req.user.role !== 'faculty') {
+      return res.status(403).json({ message: 'Faculty access required' });
     }
-    
-    const course = await Course.findById(courseId);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-    if (course.enrolled >= course.capacity) return res.status(400).json({ error: 'Course is full' });
+    const { sessionId, courseId, startDatetime, endDatetime } = req.body;
+    if (!sessionId || !courseId) return res.status(400).json({ message: 'sessionId and courseId required' });
 
-    const existing = await Registration.findOne({ student: req.user.id, course: courseId, academicYear });
-    if (existing) return res.status(400).json({ error: 'Already registered' });
+    const session = await Session.findById(sessionId);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
 
-    const registration = new Registration({ student: req.user.id, course: courseId, semester, academicYear, status: 'registered' });
-    await registration.save();
+    // Update session status
+    session.status = 'scheduled';
+    await session.save();
 
-    course.enrolled += 1;
-    await course.save();
-
-    res.status(201).json(registration);
+    res.json({ message: 'Registration opened', sessionId, courseId, startDatetime, endDatetime });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Get my registrations
+// POST /registration/enroll — Student enrolls in a session
+router.post('/enroll', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ message: 'Student access required' });
+    }
+    const { sessionId, courseId } = req.body;
+    if (!sessionId || !courseId) return res.status(400).json({ message: 'sessionId and courseId required' });
+
+    // Check capacity
+    const session = await Session.findById(sessionId);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    const currentEnrollments = await Enrollment.countDocuments({ session: sessionId, status: 'active' });
+    if (currentEnrollments >= session.capacity) {
+      return res.status(400).json({ message: 'Session is full' });
+    }
+
+    // Check duplicate
+    const existing = await Enrollment.findOne({ student: req.user.id, session: sessionId, status: 'active' });
+    if (existing) return res.status(400).json({ message: 'Already enrolled' });
+
+    const enrollment = await Enrollment.create({
+      student: req.user.id,
+      session: sessionId,
+      course: courseId,
+      startDatetime: new Date(),
+      faculty: req.body.facultyId
+    });
+
+    res.status(201).json({ message: 'Enrolled successfully', enrollment });
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ message: 'Already enrolled' });
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /registration/drop — Student drops a course
+router.post('/drop', auth, async (req, res) => {
+  try {
+    const { enrollmentId } = req.body;
+    const enrollment = await Enrollment.findById(enrollmentId);
+    if (!enrollment) return res.status(404).json({ message: 'Enrollment not found' });
+    if (enrollment.student.toString() !== req.user.id) return res.status(403).json({ message: 'Not your enrollment' });
+
+    enrollment.status = 'dropped';
+    enrollment.endDatetime = new Date();
+    await enrollment.save();
+
+    res.json({ message: 'Dropped successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /registration/my — Student's enrollments
 router.get('/my', auth, async (req, res) => {
   try {
-    const registrations = await Registration.find({ student: req.user.id }).populate('course');
-    res.json(registrations);
+    const enrollments = await Enrollment.find({ student: req.user.id, status: 'active' })
+      .populate('session')
+      .populate('course');
+    res.json({ enrollments });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Drop a course
-router.put('/drop/:id', auth, async (req, res) => {
+// GET /registration/session/:sessionId — List students enrolled in a session
+router.get('/session/:sessionId', auth, async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: 'Invalid registration ID' });
-    }
-    const reg = await Registration.findOne({ _id: req.params.id, student: req.user.id });
-    if (!reg) return res.status(404).json({ error: 'Registration not found' });
-    if (reg.status === 'dropped') return res.status(400).json({ error: 'Already dropped' });
-
-    reg.status = 'dropped';
-    reg.droppedAt = new Date();
-    await reg.save();
-
-    await Course.findByIdAndUpdate(reg.course, { $inc: { enrolled: -1 } });
-    res.json(reg);
+    const enrollments = await Enrollment.find({ session: req.params.sessionId, status: 'active' })
+      .populate('student', 'name studentId email');
+    res.json({ total: enrollments.length, enrollments });
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Admin: Create course
-router.post('/courses', auth, adminOnly, async (req, res) => {
-  try {
-    const course = new Course(req.body);
-    await course.save();
-    res.status(201).json(course);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Admin: Get all registrations
-router.get('/all', auth, adminOnly, async (req, res) => {
-  try {
-    const registrations = await Registration.find().populate('student', 'name studentId').populate('course', 'code name');
-    res.json(registrations);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 

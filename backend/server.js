@@ -10,6 +10,11 @@ const paymentsRoutes = require('./routes/payments');
 const notificationsRoutes = require('./routes/notifications');
 const paymentGatewayRoutes = require('./routes/payment-gateway');
 const usersRoutes = require('./routes/users');
+const registrationRoutes = require('./routes/registration');
+const activityRoutes = require('./routes/activities');
+const attendanceRoutes = require('./routes/attendance');
+const sessionRoutes = require('./routes/sessions');
+const campusRoutes = require('./routes/campus');
 const fcm = require('./services/fcmService');
 
 const Payment = require('./models/Payment');
@@ -33,6 +38,11 @@ app.use('/api/payments', paymentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/payment', paymentGatewayRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/registration', registrationRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/campus', campusRoutes);
 
 // Initialize Firebase Admin SDK for push notifications
 fcm.init();
