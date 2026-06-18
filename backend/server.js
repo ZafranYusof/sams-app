@@ -15,6 +15,9 @@ const activityRoutes = require('./routes/activities');
 const attendanceRoutes = require('./routes/attendance');
 const sessionRoutes = require('./routes/sessions');
 const campusRoutes = require('./routes/campus');
+const registrarRoutes = require('./routes/registrar');
+const subjectRoutes = require('./routes/subject');
+const curriculumRoutes = require('./routes/curriculum');
 const fcm = require('./services/fcmService');
 
 const Payment = require('./models/Payment');
@@ -43,6 +46,9 @@ app.use('/api/activities', activityRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/campus', campusRoutes);
+app.use('/api/registrar', registrarRoutes);
+app.use('/api/subject', subjectRoutes);
+app.use('/api/curriculum', curriculumRoutes);
 
 // Initialize Firebase Admin SDK for push notifications
 fcm.init();

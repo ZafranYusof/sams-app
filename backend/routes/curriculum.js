@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const Activity = require('../models/Activity');
+const Activity = require('../models/ManageCurriculumActivity/Activity');
 const { auth, adminOnly } = require('../middleware/auth');
 
 const router = express.Router();
