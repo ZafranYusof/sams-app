@@ -1,34 +1,21 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const { auth, adminOnly } = require('../middleware/auth');
-const User = require('../models/User');
 const fcm = require('../services/fcmService');
 
 const router = express.Router();
 
-// Resolve a student-string-id (e.g. CB23109) OR a Mongo ObjectId to a user._id.
-// Returns null if no matching user or invalid.
-async function resolveUserId(rawId) {
-  if (!rawId) return null;
-  // Already an ObjectId? trust it
-  if (/^[a-f0-9]{24}$/i.test(rawId)) return rawId;
-  // Else look up by studentId
-  const u = await User.findOne({ studentId: rawId }).select('_id');
-  return u ? u._id.toString() : null;
-}
+// Notification schema (inline, simple)
+const notificationSchema = new mongoose.Schema({
+  studentId: { type: String, required: true },
+  title: { type: String, required: true },
+  message: { type: String },
+  type: { type: String, enum: ['info', 'warning', 'payment', 'reminder'], default: 'info' },
+  read: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
 
-// Fire-and-forget push to many studentIds (string IDs OR Mongo IDs). Never blocks the response.
-function pushToStudents(studentIds, payload) {
-  Promise.all(studentIds.map(async (sid) => {
-    const uid = await resolveUserId(sid);
-    if (!uid) return;
-    try { await fcm.sendToUser(uid, payload); }
-    catch (e) { console.error('[notif push]', sid, e.message); }
-  })).catch(e => console.error('[notif push batch]', e.message));
-}
-
-// BUG 2 FIX: Use separate Notification model
-const Notification = require('../models/Notification');
+const Notification = mongoose.models.Notification || mongoose.model('Notification', notificationSchema);
 
 // POST /api/notifications - create notification(s) [admin only]
 router.post('/', auth, adminOnly, async (req, res) => {
@@ -36,21 +23,6 @@ router.post('/', auth, adminOnly, async (req, res) => {
     const { notifications } = req.body;
     if (Array.isArray(notifications) && notifications.length > 0) {
       const created = await Notification.insertMany(notifications);
-      // Push to each student's devices
-      const grouped = {};
-      for (const n of notifications) {
-        if (!n.studentId) continue;
-        if (!grouped[n.studentId]) grouped[n.studentId] = [];
-        grouped[n.studentId].push(n);
-      }
-      Object.entries(grouped).forEach(([sid, list]) => {
-        const first = list[0];
-        pushToStudents([sid], {
-          title: first.title || 'Notification',
-          body: first.message || '',
-          data: { type: first.type || 'info' },
-        });
-      });
       return res.status(201).json({ success: true, count: created.length });
     }
     // Single notification
@@ -59,11 +31,6 @@ router.post('/', auth, adminOnly, async (req, res) => {
       return res.status(400).json({ error: 'studentId and title are required' });
     }
     const notif = await Notification.create({ studentId, title, message, type: type || 'reminder' });
-    pushToStudents([studentId], {
-      title,
-      body: message || '',
-      data: { type: type || 'reminder', notificationId: notif._id.toString() },
-    });
     res.status(201).json({ success: true, notification: notif });
   } catch (err) {
     console.error('Create notification error:', err.message);
@@ -78,35 +45,54 @@ router.post('/send-reminder', auth, adminOnly, async (req, res) => {
     if (!Array.isArray(studentIds) || studentIds.length === 0) {
       return res.status(400).json({ error: 'studentIds array required' });
     }
-    const reminderText = message || 'You have outstanding tuition fees. Please make payment before the deadline to avoid penalties.';
+    
+    // Create notifications in database
     const notifications = studentIds.map(sid => ({
       studentId: sid,
       title: 'Payment Reminder',
-      message: reminderText,
+      message: message || 'You have outstanding tuition fees. Please make payment before the deadline to avoid penalties.',
       type: 'reminder',
       read: false,
     }));
     const created = await Notification.insertMany(notifications);
-
-    // Debug: log what studentIds treasury sends + resolve to User IDs
-    console.log('[send-reminder] Received studentIds:', studentIds);
-    console.log('[send-reminder] Count:', studentIds.length);
     
-    // Resolve studentIds to User IDs for debugging
-    const resolved = await Promise.all(studentIds.map(async (sid) => {
-      const uid = await resolveUserId(sid);
-      return { studentId: sid, userId: uid };
-    }));
-    console.log('[send-reminder] Resolved:', resolved);
+    // Send FCM push notifications to each student
+    const Student = require('../models/Student');
+    let pushSent = 0;
+    let pushFailed = 0;
     
-    // Fire-and-forget FCM push to every targeted student's devices
-    pushToStudents(studentIds, {
-      title: 'Payment Reminder',
-      body: reminderText,
-      data: { type: 'reminder' },
+    for (const sid of studentIds) {
+      try {
+        // Find student by studentId to get MongoDB _id
+        const student = await Student.findOne({ studentId: sid }).select('_id');
+        if (student) {
+          const result = await fcm.sendToUser(student._id.toString(), {
+            title: 'Payment Reminder',
+            body: message || 'You have outstanding tuition fees. Please make payment before the deadline.',
+            data: { type: 'reminder' }
+          });
+          if (result.success) {
+            pushSent++;
+          } else {
+            pushFailed++;
+            console.log(`[Reminder] FCM failed for ${sid}: ${result.reason}`);
+          }
+        } else {
+          pushFailed++;
+          console.log(`[Reminder] Student ${sid} not found`);
+        }
+      } catch (err) {
+        pushFailed++;
+        console.error(`[Reminder] Error sending to ${sid}:`, err.message);
+      }
+    }
+    
+    res.status(201).json({ 
+      success: true, 
+      count: created.length,
+      pushSent,
+      pushFailed
     });
-
-    res.status(201).json({ success: true, count: created.length });
   } catch (err) {
     console.error('Send reminder error:', err.message);
     res.status(500).json({ error: 'Failed to send reminders' });
@@ -117,10 +103,9 @@ router.post('/send-reminder', auth, adminOnly, async (req, res) => {
 router.put('/read-all/:studentId', auth, async (req, res) => {
   try {
     // Authorization: only own notifications or admin
-    const User = require('../models/User');
-    const user = await User.findById(req.user.id);
-    // BUG 7 FIX: Check role first — non-student roles may have null studentId
-    if (req.user.role !== 'admin' && (req.user.role !== 'student' || user.studentId !== req.params.studentId)) {
+    const Student = require('../models/Student');
+    const student = await Student.findById(req.user.id);
+    if (student.studentId !== req.params.studentId && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Access denied' });
     }
     await Notification.updateMany({ studentId: req.params.studentId }, { read: true });
@@ -140,10 +125,9 @@ router.put('/:id/read', auth, async (req, res) => {
     const notif = await Notification.findById(req.params.id);
     if (!notif) return res.status(404).json({ error: 'Notification not found' });
     // Authorization: only own notification or admin
-    const User = require('../models/User');
-    const user = await User.findById(req.user.id);
-    // BUG 7 FIX: Check role first — non-student roles may have null studentId
-    if (req.user.role !== 'admin' && (req.user.role !== 'student' || notif.studentId !== user.studentId)) {
+    const Student = require('../models/Student');
+    const student = await Student.findById(req.user.id);
+    if (notif.studentId !== student.studentId && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Access denied' });
     }
     await Notification.findByIdAndUpdate(req.params.id, { read: true });
@@ -158,10 +142,9 @@ router.put('/:id/read', auth, async (req, res) => {
 router.get('/:studentId', auth, async (req, res) => {
   try {
     // Authorization: only own notifications or admin
-    const User = require('../models/User');
-    const user = await User.findById(req.user.id);
-    // BUG 7 FIX: Check role first — non-student roles may have null studentId
-    if (req.user.role !== 'admin' && (req.user.role !== 'student' || user.studentId !== req.params.studentId)) {
+    const Student = require('../models/Student');
+    const student = await Student.findById(req.user.id);
+    if (student.studentId !== req.params.studentId && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Access denied' });
     }
     const notifications = await Notification.find({ studentId: req.params.studentId }).sort({ createdAt: -1 });

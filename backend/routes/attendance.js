@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const AttendanceCode = require('../models/AttendanceCode');
-const Attendance = require('../models/Attendance');
-const Session = require('../models/Session');
-const Campus = require('../models/Campus');
-const Enrollment = require('../models/Enrollment');
+const AttendanceCode = require('../models/ManageClassAttendance/AttendanceCode');
+const Attendance = require('../models/ManageClassAttendance/Attendance');
+const Session = require('../models/ManageOpenRegistration/Session');
+const Campus = require('../models/ManageClassAttendance/Campus');
+const Enrollment = require('../models/ManageOpenRegistration/Enrollment');
 const { auth } = require('../middleware/auth');
 const crypto = require('crypto');
 

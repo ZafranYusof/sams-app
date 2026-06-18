@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const Payment = require('../models/Payment');
-const User = require('../models/User');
+const Payment = require('../models/ManageTuitionFees/Payment');
+const Student = require('../models/Student');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -9,14 +9,14 @@ const router = express.Router();
 // GET /api/payments/:studentId - view payment history
 router.get('/:studentId', auth, async (req, res) => {
   try {
-    const user = await User.findOne({ studentId: req.params.studentId });
-    if (!user) return res.json({ payments: [] });
+    const student = await Student.findOne({ studentId: req.params.studentId });
+    if (!student) return res.json({ payments: [] });
     // Authorization: only own data or admin
-    if (user._id.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (student._id.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Access denied' });
     }
     
-    const payments = await Payment.find({ student: user._id }).populate('fee').sort({ paidAt: -1 });
+    const payments = await Payment.find({ student: student._id }).populate('fee').sort({ paidAt: -1 });
     res.json({ payments });
   } catch (err) {
     console.error('Get payments error:', err.message);
@@ -29,7 +29,7 @@ router.post('/', auth, async (req, res) => {
   try {
     const { fee_id, feeId, amount, bank, student_id } = req.body;
     const crypto = require('crypto');
-    const Fee = require('../models/Fee');
+    const Fee = require('../models/ManageTuitionFees/Fee');
 
     const targetFeeId = fee_id || feeId;
     if (!targetFeeId || !mongoose.Types.ObjectId.isValid(targetFeeId)) {
@@ -66,36 +66,17 @@ router.post('/', auth, async (req, res) => {
     });
     await payment.save();
 
-    // Allocate payment to fee items in priority order:
-    // 1. Yuran Pengajian (tuition) — first, so student becomes "active"
-    // 2. Yuran Asrama (facility) — second
-    // 3. Other items (insurance, activity, etc.)
-    const ITEM_PRIORITY = { tuition: 1, facility: 2, insurance: 3, activity: 4, other: 5 };
-    const sortedItems = [...fee.items].sort((a, b) =>
-      (ITEM_PRIORITY[a.category] || 99) - (ITEM_PRIORITY[b.category] || 99)
+    // Atomic update to prevent race conditions
+    const updatedFee = await Fee.findOneAndUpdate(
+      { _id: targetFeeId },
+      {
+        $inc: { paidAmount: actualAmount },
+        $set: { status: (fee.paidAmount + actualAmount) >= fee.totalAmount ? 'paid' : 'partial' }
+      },
+      { new: true }
     );
 
-    let amountToAllocate = actualAmount;
-    for (const item of sortedItems) {
-      if (amountToAllocate <= 0) break;
-      const itemRemaining = item.amount - (item.paidAmount || 0);
-      if (itemRemaining <= 0) continue;
-      const apply = Math.min(amountToAllocate, itemRemaining);
-      // Find the actual item in fee.items by _id and update it
-      const targetItem = fee.items.id(item._id);
-      if (targetItem) {
-        targetItem.paidAmount = (targetItem.paidAmount || 0) + apply;
-        if (targetItem.paidAmount >= targetItem.amount) {
-          targetItem.paidAt = new Date();
-        }
-      }
-      amountToAllocate -= apply;
-    }
-
-    // The pre('save') hook will auto-recompute paidAmount + status from items
-    await fee.save();
-
-    res.status(201).json({ payment, fee, txn_id: transactionId, status: 'success' });
+    res.status(201).json({ payment, fee: updatedFee, txn_id: transactionId, status: 'success' });
   } catch (err) {
     console.error('Payment error:', err.message);
     res.status(500).json({ error: 'Payment failed. Please try again.' });
